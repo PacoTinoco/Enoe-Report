@@ -1,0 +1,6 @@
+# Microdatos descargados (pesan ~50 MB por trimestre; se vuelven a descargar solos)
+datos/*.zip
+# Configuración local con contraseñas
+config.ini
+.streamlit/secrets.toml
+__pycache__/

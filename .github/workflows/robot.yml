@@ -1,0 +1,71 @@
+# Robot ENOE Jalisco
+# Corre todos los días a las 06:00 (hora de la Ciudad de México) y, cuando INEGI
+# publica la ENOE trimestral, genera la ficha, la manda por correo y la guarda
+# en la carpeta fichas/ de este repositorio.
+name: Robot ENOE Jalisco
+
+on:
+  schedule:
+    - cron: "0 12 * * *"     # 12:00 UTC = 06:00 CDMX (México ya no usa horario de verano)
+  workflow_dispatch:          # botón "Run workflow" para correrlo a mano
+    inputs:
+      periodo:
+        description: "Trimestre (AAAA_T#). Vacío = automático"
+        required: false
+        default: ""
+      forzar:
+        description: "Rehacer aunque ya exista"
+        type: boolean
+        default: false
+      sin_email:
+        description: "No enviar correo"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write             # para guardar las fichas en el repositorio
+
+concurrency:
+  group: robot-enoe           # nunca dos ejecuciones al mismo tiempo
+
+jobs:
+  robot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Revisar publicación y generar ficha
+        env:
+          SMTP_USUARIO:   ${{ secrets.SMTP_USUARIO }}
+          SMTP_PASSWORD:  ${{ secrets.SMTP_PASSWORD }}
+          SMTP_REMITENTE: ${{ secrets.SMTP_REMITENTE }}
+          DESTINATARIOS:  ${{ secrets.DESTINATARIOS }}
+          PERIODO:        ${{ inputs.periodo }}
+          FORZAR:         ${{ inputs.forzar }}
+          SIN_EMAIL:      ${{ inputs.sin_email }}
+        run: |
+          args=()
+          [ -n "$PERIODO" ] && args+=(--periodo "$PERIODO")
+          [ "$FORZAR" = "true" ] && args+=(--forzar)
+          [ "$SIN_EMAIL" = "true" ] && args+=(--sin-email)
+          python robot.py "${args[@]}"
+
+      - name: Guardar fichas y datos en el repositorio
+        if: always()
+        run: |
+          git config user.name  "robot-enoe"
+          git config user.email "robot-enoe@users.noreply.github.com"
+          git add fichas datos/*.json serie_*.csv procesados.json calendario_enoe.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Robot: actualización $(date -u +%Y-%m-%d)"
+            git push
+          fi
