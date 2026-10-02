@@ -19,6 +19,7 @@ import streamlit as st
 
 import calendario
 from generar_ficha import preparar
+from pipeline_trimestral import borrar_ficha, leer_estado
 
 st.set_page_config(page_title="ENOE Jalisco · Indicadores Laborales", page_icon="📊", layout="wide")
 
@@ -52,6 +53,13 @@ def a_fecha(periodo: str):
 def anterior(periodo: str) -> str:
     anio, trim = periodo.split("_T")
     return f"{int(anio) - 1}_T{trim}"
+
+def hora_cdmx(iso: str) -> str | None:
+    """'2026-10-02T19:44:00Z' → '02/10/2026 13:44' (hora del centro de México)."""
+    momento = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    if momento.tzinfo is None:                 # registros viejos sin zona horaria: no se sabe cuál es
+        return None
+    return momento.astimezone(calendario.CDMX).strftime("%d/%m/%Y %H:%M")
 
 @st.cache_data(ttl=30)
 def serie(ruta: Path, col: str) -> pd.DataFrame:
@@ -96,6 +104,59 @@ if c:
     k4.metric("TD mujeres", f"{M['td']:.2f}%")
 else:
     st.info("Todavía no hay indicadores calculados. Genera la primera ficha en la pestaña ⚙️.")
+
+# ── Robot en GitHub ─────────────────────────────────────────────────────────────
+# En la nube (Streamlit Community Cloud) el botón dispara el robot de GitHub Actions:
+# la ficha se genera allá, se manda por correo y se guarda en el repositorio, y la app
+# se actualiza sola. En una computadora local, el botón corre el pipeline directamente.
+
+def secreto(seccion: str, clave: str):
+    try:
+        return st.secrets[seccion][clave]
+    except Exception:
+        return None
+
+GH_TOKEN, GH_REPO = secreto("github", "token"), secreto("github", "repo")
+CLAVE_APP = secreto("app", "clave")
+EN_NUBE = bool(GH_TOKEN and GH_REPO)
+GH_API = f"https://api.github.com/repos/{GH_REPO}/actions/workflows/robot.yml"
+GH_HEADERS = {"Authorization": f"Bearer {GH_TOKEN}", "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28"}
+
+
+def ultimas_ejecuciones(n=5) -> list[dict]:
+    r = requests.get(f"{GH_API}/runs", headers=GH_HEADERS, params={"per_page": n}, timeout=30)
+    r.raise_for_status()
+    return r.json()["workflow_runs"]
+
+
+def disparar_robot(inputs: dict, mensaje_ok: str):
+    """Corre el robot en GitHub Actions con estos inputs y espera a que termine."""
+    inicio = datetime.now(timezone.utc) - timedelta(seconds=10)
+    r = requests.post(f"{GH_API}/dispatches", headers=GH_HEADERS, timeout=30,
+                      json={"ref": "main", "inputs": inputs})
+    if r.status_code != 204:
+        st.error(f"GitHub rechazó la solicitud ({r.status_code}): {r.text[:300]}")
+        return
+    estado = st.empty()
+    for _ in range(60):                                    # hasta ~5 minutos
+        time.sleep(5)
+        run = next((x for x in ultimas_ejecuciones() if x["event"] == "workflow_dispatch"
+                    and datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")) >= inicio), None)
+        if not run:
+            estado.info("⏳ Enviando la solicitud al robot...")
+            continue
+        if run["status"] != "completed":
+            estado.info(f"⏳ El robot está trabajando ({run['status']}). [Ver detalle]({run['html_url']})")
+            continue
+        if run["conclusion"] == "success":
+            estado.success(mensaje_ok)
+            st.cache_data.clear()
+        else:
+            estado.error(f"❌ El robot terminó con error. [Ver detalle]({run['html_url']})")
+        return
+    estado.warning("El robot sigue trabajando. Revisa el avance en GitHub → Actions.")
+
 
 st.divider()
 tab1, tab2, tab3, tab4 = st.tabs(["📈 Serie histórica", "👥 Por sexo", "📄 Fichas", "⚙️ Generar ficha"])
@@ -171,14 +232,18 @@ with tab2:
 
 
 # ── Fichas ────────────────────────────────────────────────────────────────────
+# Hay un solo archivo por trimestre (ficha_AAAA_T#): al regenerarla se sobrescribe, no se duplica.
 with tab3:
     fichas = sorted(FICHAS.glob("ficha_*.txt"), reverse=True)
+    generadas = leer_estado().get("generadas", {})
     if not fichas:
         st.info("No hay fichas generadas todavía.")
     for i, txt in enumerate(fichas):
         per = txt.stem.replace("ficha_", "")
         docx = txt.with_suffix(".docx")
-        with st.expander(f"📄 {etiqueta(per)}", expanded=(i == 0)):
+        fecha = hora_cdmx(generadas[per]) if per in generadas else None
+        titulo = f"📄 {etiqueta(per)}" + (f"  ·  generada el {fecha} (hora CDMX)" if fecha else "")
+        with st.expander(titulo, expanded=(i == 0)):
             texto, botones = st.columns([3, 1])
             texto.text(txt.read_text(encoding="utf-8"))
             botones.download_button("📥 Descargar .docx", docx.read_bytes() if docx.exists() else b"",
@@ -187,60 +252,19 @@ with tab3:
                                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
             botones.download_button("📥 Descargar .txt", txt.read_bytes(), file_name=txt.name,
                                     mime="text/plain", key=f"txt_{per}", width="stretch")
-
-
-# ── Generar ficha ─────────────────────────────────────────────────────────────
-# En la nube (Streamlit Community Cloud) el botón dispara el robot de GitHub Actions:
-# la ficha se genera allá, se manda por correo y se guarda en el repositorio, y la app
-# se actualiza sola. En una computadora local, el botón corre el pipeline directamente.
-
-def secreto(seccion: str, clave: str):
-    try:
-        return st.secrets[seccion][clave]
-    except Exception:
-        return None
-
-GH_TOKEN, GH_REPO = secreto("github", "token"), secreto("github", "repo")
-CLAVE_APP = secreto("app", "clave")
-GH_API = f"https://api.github.com/repos/{GH_REPO}/actions/workflows/robot.yml"
-GH_HEADERS = {"Authorization": f"Bearer {GH_TOKEN}", "Accept": "application/vnd.github+json",
-              "X-GitHub-Api-Version": "2022-11-28"}
-
-
-def ultimas_ejecuciones(n=5) -> list[dict]:
-    r = requests.get(f"{GH_API}/runs", headers=GH_HEADERS, params={"per_page": n}, timeout=30)
-    r.raise_for_status()
-    return r.json()["workflow_runs"]
-
-
-def correr_en_github(periodo: str, sin_email: bool, forzar: bool):
-    inicio = datetime.now(timezone.utc) - timedelta(seconds=10)
-    r = requests.post(f"{GH_API}/dispatches", headers=GH_HEADERS, timeout=30, json={
-        "ref": "main",
-        "inputs": {"periodo": periodo, "sin_email": str(sin_email).lower(), "forzar": str(forzar).lower()},
-    })
-    if r.status_code != 204:
-        st.error(f"GitHub rechazó la solicitud ({r.status_code}): {r.text[:300]}")
-        return
-    estado = st.empty()
-    for _ in range(60):                                    # hasta ~5 minutos
-        time.sleep(5)
-        run = next((x for x in ultimas_ejecuciones() if x["event"] == "workflow_dispatch"
-                    and datetime.fromisoformat(x["created_at"].replace("Z", "+00:00")) >= inicio), None)
-        if not run:
-            estado.info("⏳ Enviando la solicitud al robot...")
-            continue
-        if run["status"] != "completed":
-            estado.info(f"⏳ El robot está trabajando ({run['status']}). [Ver detalle]({run['html_url']})")
-            continue
-        if run["conclusion"] == "success":
-            estado.success("✅ Listo. La ficha se guardó en el repositorio y la app se actualiza en "
-                           "1–2 minutos (recarga la página).")
-            st.cache_data.clear()
-        else:
-            estado.error(f"❌ El robot terminó con error. [Ver detalle]({run['html_url']})")
-        return
-    estado.warning("El robot sigue trabajando. Revisa el avance en GitHub → Actions.")
+            with botones.popover("🗑️ Borrar ficha", width="stretch"):
+                st.warning(f"Se borrarán el .txt y el .docx de {etiqueta(per)}. "
+                           "Se puede volver a generar en la pestaña ⚙️.")
+                clave_b = st.text_input("Clave", type="password", key=f"clave_b_{per}") if CLAVE_APP else ""
+                if st.button("Confirmar borrado", key=f"borrar_{per}", type="primary"):
+                    if CLAVE_APP and clave_b != CLAVE_APP:
+                        st.error("Clave incorrecta.")
+                    elif EN_NUBE:
+                        disparar_robot({"borrar": per}, f"🗑️ Ficha {etiqueta(per)} borrada. "
+                                       "La app se actualiza en 1–2 minutos (recarga la página).")
+                    else:
+                        borrar_ficha(per)
+                        st.rerun()
 
 
 def correr_local(periodo: str, sin_email: bool, forzar: bool):
@@ -261,14 +285,13 @@ def correr_local(periodo: str, sin_email: bool, forzar: bool):
 
 
 with tab4:
-    en_nube = bool(GH_TOKEN and GH_REPO)
     st.markdown("Descarga los microdatos de la ENOE, calcula los indicadores y genera la ficha "
                 "en **.txt** y **.docx**."
-                + (" La ficha también se envía por correo a la lista configurada." if en_nube else ""))
+                + (" La ficha también se envía por correo a la lista configurada." if EN_NUBE else ""))
     with st.form("generar"):
         per_txt = st.text_input("Trimestre (vacío = el más reciente publicado)", placeholder="ej. 2026_T3")
         c1, c2 = st.columns(2)
-        sin_email = c1.checkbox("No enviar correo", value=not en_nube)
+        sin_email = c1.checkbox("No enviar correo", value=not EN_NUBE)
         forzar = c2.checkbox("Rehacer aunque ya exista", value=False)
         clave = st.text_input("Clave", type="password") if CLAVE_APP else ""
         correr = st.form_submit_button("▶  Generar ficha", type="primary")
@@ -279,18 +302,21 @@ with tab4:
             st.error("Formato incorrecto. Usa AAAA_T# (ej. 2026_T3).")
         elif CLAVE_APP and clave != CLAVE_APP:
             st.error("Clave incorrecta.")
-        elif en_nube:
-            correr_en_github(periodo, sin_email, forzar)
+        elif EN_NUBE:
+            disparar_robot({"periodo": periodo, "sin_email": str(sin_email).lower(),
+                            "forzar": str(forzar).lower()},
+                           "✅ Listo. La ficha se guardó en el repositorio y la app se actualiza en "
+                           "1–2 minutos (recarga la página).")
         else:
             correr_local(periodo, sin_email, forzar)
 
-    if en_nube:
+    if EN_NUBE:
         with st.expander("🤖 Últimas ejecuciones del robot"):
             try:
                 for run in ultimas_ejecuciones():
                     icono = {"success": "✅", "failure": "❌"}.get(run["conclusion"], "⏳")
                     tipo = "programada" if run["event"] == "schedule" else "manual"
-                    st.markdown(f"{icono} {run['created_at'][:16].replace('T', ' ')} UTC · {tipo} · "
+                    st.markdown(f"{icono} {hora_cdmx(run['created_at'])} (hora CDMX) · {tipo} · "
                                 f"[ver]({run['html_url']})")
             except Exception as e:
                 st.caption(f"No se pudo consultar GitHub: {e}")

@@ -81,6 +81,10 @@ python -m streamlit run app.py
 
 Se abre en el navegador. En la pestaña **⚙️ Generar ficha** basta con presionar **Generar ficha**.
 
+En la pestaña **📄 Fichas** cada ficha muestra la fecha y hora (CDMX) en que se generó, botones de
+descarga y **🗑️ Borrar ficha**. Hay un solo archivo por trimestre: al regenerarla se sobrescribe,
+nunca se duplica.
+
 **Opción B — Terminal:**
 
 ```bash

@@ -25,12 +25,13 @@ import json
 import logging
 import os
 import smtplib
-from datetime import date, datetime
+from datetime import date
 from email.message import EmailMessage
 from pathlib import Path
 
 import pandas as pd
 
+from calendario import ahora_cdmx
 from calcular_indicadores import JALISCO, calcular, publicado
 from generar_ficha import generar_docx, generar_txt, preparar
 
@@ -73,13 +74,36 @@ def leer_estado() -> dict:
     return {"procesados": []}
 
 
+def guardar_estado(estado: dict):
+    ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def marcar_procesado(periodo: str):
     estado = leer_estado()
     if periodo not in estado["procesados"]:
         estado["procesados"].append(periodo)
+    ahora = ahora_cdmx().isoformat(timespec="seconds")      # hora CDMX (en GitHub el reloj está en UTC)
     estado["ultimo"] = periodo
-    estado["fecha_ultimo"] = datetime.now().isoformat(timespec="seconds")
-    ESTADO.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+    estado["fecha_ultimo"] = ahora
+    estado.setdefault("generadas", {})[periodo] = ahora
+    guardar_estado(estado)
+
+
+def borrar_ficha(periodo: str) -> list[str]:
+    """Borra la ficha (.txt y .docx) de un trimestre y lo quita de los procesados.
+    No toca "ultimo" (el robot sigue esperando el trimestre siguiente) ni los indicadores en datos/."""
+    borrados = []
+    for ext in (".txt", ".docx"):
+        ruta = FICHAS / f"ficha_{periodo}{ext}"
+        if ruta.exists():
+            ruta.unlink()
+            borrados.append(ruta.name)
+    estado = leer_estado()
+    if periodo in estado["procesados"]:
+        estado["procesados"].remove(periodo)
+    estado.get("generadas", {}).pop(periodo, None)
+    guardar_estado(estado)
+    return borrados
 
 
 # ── Revisión y series ─────────────────────────────────────────────────────────

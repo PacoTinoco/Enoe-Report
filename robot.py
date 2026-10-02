@@ -21,6 +21,7 @@ Uso:
     python robot.py                          # revisión normal
     python robot.py --periodo 2026_T3        # forzar un trimestre específico
     python robot.py --hoy 2026-11-25         # simular otra fecha (pruebas)
+    python robot.py --borrar 2026_T2         # borrar la ficha de un trimestre
 """
 
 import argparse
@@ -33,7 +34,7 @@ from datetime import date, datetime
 
 import calendario
 from calcular_indicadores import publicado
-from pipeline_trimestral import CONFIG, detectar_periodo, ejecutar, leer_estado
+from pipeline_trimestral import CONFIG, borrar_ficha, detectar_periodo, ejecutar, leer_estado
 
 HORA_LIMITE = 10          # hasta qué hora (CDMX) esperar el día de publicación
 ESPERA_SEG  = 5 * 60      # cada cuánto revisar
@@ -58,10 +59,18 @@ def main():
     ap.add_argument("--forzar", action="store_true", help="Rehacer aunque ya esté procesado")
     ap.add_argument("--sin-email", action="store_true", help="No enviar correo")
     ap.add_argument("--hoy", help="AAAA-MM-DD — simular la fecha (para pruebas)")
+    ap.add_argument("--borrar", help="AAAA_T# — borrar la ficha de este trimestre y terminar")
     args = ap.parse_args()
 
-    if args.periodo and not re.fullmatch(r"\d{4}_T[1-4]", args.periodo):
-        sys.exit(f"Período inválido: {args.periodo!r} (formato AAAA_T#)")
+    for p in (args.periodo, args.borrar):
+        if p and not re.fullmatch(r"\d{4}_T[1-4]", p):
+            sys.exit(f"Período inválido: {p!r} (formato AAAA_T#)")
+
+    if args.borrar:
+        borrados = borrar_ficha(args.borrar)
+        resumen(f"🗑️ Ficha {args.borrar} borrada: {', '.join(borrados)}" if borrados
+                else f"No había ficha de {args.borrar}.")
+        return
     hoy = date.fromisoformat(args.hoy) if args.hoy else calendario.ahora_cdmx().date()
     config = configparser.ConfigParser()
     config.read(CONFIG, encoding="utf-8")

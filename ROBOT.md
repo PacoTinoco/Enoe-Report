@@ -129,6 +129,7 @@ actualiza sola en uno o dos minutos.
 python -m pip install -r requirements.txt
 python robot.py                     # hace lo mismo que la ejecución diaria
 python robot.py --periodo 2026_T3   # forzar un trimestre
+python robot.py --borrar 2026_T3    # borrar la ficha de un trimestre
 python calendario.py                # ver las próximas publicaciones
 python -m streamlit run app.py      # dashboard local
 ```
