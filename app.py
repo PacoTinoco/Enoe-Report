@@ -302,6 +302,9 @@ with tab4:
             st.error("Formato incorrecto. Usa AAAA_T# (ej. 2026_T3).")
         elif CLAVE_APP and clave != CLAVE_APP:
             st.error("Clave incorrecta.")
+        elif EN_NUBE and periodo and not forzar and periodo in leer_estado().get("procesados", []):
+            st.warning(f"{etiqueta(periodo)} ya está procesado, así que el robot no haría nada. "
+                       "Marca **Rehacer aunque ya exista** para generarlo de nuevo.")
         elif EN_NUBE:
             disparar_robot({"periodo": periodo, "sin_email": str(sin_email).lower(),
                             "forzar": str(forzar).lower()},
