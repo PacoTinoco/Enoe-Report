@@ -12,7 +12,8 @@ Uso:
 Pasos:
     1. Determinar el período (argumento, o el más reciente con microdatos publicados)
     2. Saltar si ya fue procesado (procesados.json), salvo --forzar
-    3. Calcular indicadores del período y del mismo trimestre del año anterior
+    3. Calcular indicadores del período, del mismo trimestre del año anterior,
+       del cierre del año anterior (T4) y del trimestre anterior
     4. Actualizar las series históricas (CSV) que usa el dashboard
     5. Generar la ficha .txt y .docx en fichas/
     6. Enviar el correo con la ficha adjunta
@@ -50,8 +51,19 @@ log = logging.getLogger("pipeline")
 # ── Períodos ──────────────────────────────────────────────────────────────────
 
 def periodo_anterior(periodo: str) -> str:
+    """Mismo trimestre del año anterior."""
     anio, trim = periodo.split("_T")
     return f"{int(anio) - 1}_T{trim}"
+
+
+def cierre_anio_anterior(periodo: str) -> str:
+    """T4 del año anterior (cierre de diciembre)."""
+    return f"{int(periodo[:4]) - 1}_T4"
+
+
+def trimestre_previo(periodo: str) -> str:
+    anio, trim = map(int, periodo.split("_T"))
+    return f"{anio - 1}_T4" if trim == 1 else f"{anio}_T{trim - 1}"
 
 
 def detectar_periodo() -> str | None:
@@ -113,9 +125,15 @@ def revisar(ind: dict):
     problemas = []
     if len(ind["entidades"]) != 32:
         problemas.append(f"se esperaban 32 entidades y hay {len(ind['entidades'])}")
-    for grupo, valores in ind["jalisco"].items():
+    for grupo in ("total", "hombres", "mujeres"):
+        valores = ind["jalisco"][grupo]
         if not 0 < valores["td"] < 20 or not 20 < valores["tpea"] < 90:
             problemas.append(f"valores fuera de rango para Jalisco ({grupo}): {valores}")
+    oc = ind["jalisco"]["ocupacion"]
+    if abs(oc["formal"] + oc["informal"] - oc["total"]) > 0.001 * oc["total"]:
+        problemas.append(f"formal + informal no suma el total de ocupados: {oc}")
+    if oc["sector_no_especificado"] > 0.05 * oc["total"]:
+        problemas.append(f"demasiados ocupados sin sector de actividad: {oc}")
     if problemas:
         raise RuntimeError("Revisión de datos falló: " + "; ".join(problemas))
 
@@ -164,7 +182,8 @@ def enviar_correo(config, contexto, adjuntos: list[Path]):
         f"Resumen:\n"
         f"  · TD: {c.J['td']:.2f}% (año anterior {c.Ja['td']:.2f}%), lugar {c.rank} de {c.n} entidades\n"
         f"  · TD hombres: {H['td']:.2f}%   ·   TD mujeres: {M['td']:.2f}%\n"
-        f"  · TPEA: {c.J['tpea']:.1f}%   ·   TIL1: {c.J['til1']:.1f}%\n\n"
+        f"  · TPEA: {c.J['tpea']:.1f}%   ·   TIL1: {c.J['til1']:.1f}%\n"
+        f"  · Población ocupada: {c.ocupada_resumen}\n\n"
         f"Archivos: ficha en texto (.txt) y en Word (.docx).\n\n"
         f"Generado automáticamente a partir de los microdatos de la ENOE (INEGI).\n"
         f"Proyecto de Aplicación Profesional — Economía, ITESO"
@@ -190,8 +209,10 @@ def ejecutar(periodo: str, config, sin_email=False) -> tuple[Path, Path]:
     log.info("→ 1/5 Calculando indicadores desde los microdatos...")
     act = calcular(periodo, DATOS)
     ant = calcular(periodo_anterior(periodo), DATOS)
-    revisar(act)
-    revisar(ant)
+    dic = calcular(cierre_anio_anterior(periodo), DATOS)
+    prev = calcular(trimestre_previo(periodo), DATOS)
+    for ind in (act, ant, dic, prev):
+        revisar(ind)
     log.info(f"  Jalisco TD {act['jalisco']['total']['td']:.2f}% · año anterior {ant['jalisco']['total']['td']:.2f}%")
 
     log.info("→ 2/5 Actualizando series históricas...")
@@ -199,7 +220,7 @@ def ejecutar(periodo: str, config, sin_email=False) -> tuple[Path, Path]:
     actualizar_series(act)
 
     log.info("→ 3/5 Generando ficha...")
-    contexto = preparar(act, ant)
+    contexto = preparar(act, ant, dic, prev)
     FICHAS.mkdir(exist_ok=True)
     txt, docx = FICHAS / f"ficha_{periodo}.txt", FICHAS / f"ficha_{periodo}.docx"
     generar_txt(contexto, txt)

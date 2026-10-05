@@ -13,7 +13,6 @@ Uso:
 
 import argparse
 import re
-import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -24,9 +23,11 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 
-from calcular_indicadores import JALISCO, REGION, calcular
+from calcular_indicadores import JALISCO, REGION, SECTORES, calcular
 
 REGLA = "─" * 60
+SERIES = "Series originales (sin ajuste estacional), periodicidad trimestral."
+NOTA_SEXO = "Las estimaciones por sexo tienen mayor error de muestreo; cautela con variaciones pequeñas."
 ORDINAL = {1: "1°", 2: "2°", 3: "3°", 4: "4°"}
 NOMBRES = {
     "td":           "Tasa de Desocupación (TD)",
@@ -54,11 +55,31 @@ def dif(a, b, k):
 def signo(v, dec=2):
     return f"{'−' if v < 0 else '+'}{abs(v):.{dec}f}"
 
+def miles(n):
+    return f"{n:,}"
+
+def con_signo(n):
+    """Entero con signo y separador de miles: +12,345 / −3,210."""
+    return f"{'−' if n < 0 else '+'}{abs(n):,}"
+
+def cambio_pct(actual, base):
+    return signo((actual - base) / base * 100, 1) + "%"
+
+def var_personas(actual, base):
+    """'+12,345 (+0.3%)': cambio en personas y en porcentaje."""
+    return f"{con_signo(actual - base)} ({cambio_pct(actual, base)})"
+
+def etiqueta(periodo):
+    anio, trim = periodo.split("_T")
+    return f"T{trim} {anio}"
+
 
 # ── Contenido de la ficha ─────────────────────────────────────────────────────
 
-def preparar(act: dict, ant: dict) -> SimpleNamespace:
-    """Arma todas las cifras y frases de la ficha."""
+def preparar(act: dict, ant: dict, dic: dict | None = None, prev: dict | None = None) -> SimpleNamespace:
+    """Arma todas las cifras y tablas de la ficha.
+    dic = T4 del año anterior (cierre de diciembre); prev = trimestre anterior.
+    Sin ellos (p. ej. desde el dashboard) se omite la sección de población ocupada."""
     anio, trim = map(int, re.fullmatch(r"(\d{4})_T(\d)", act["periodo"]).groups())
     c = SimpleNamespace()
     c.anio, c.trim = anio, trim
@@ -72,29 +93,7 @@ def preparar(act: dict, ant: dict) -> SimpleNamespace:
 
     # ── Análisis anual ────────────────────────────────────────────────────
     var = dif(J["td"], Ja["td"], "td")
-    rel = abs(var) / r(Ja["td"], "td") * 100
     dif_nac = dif(J["td"], N["td"], "td")
-    if var < 0:
-        cambio, rel_txt = f"disminución de {abs(var):.2f} puntos porcentuales", "una reducción relativa"
-    elif var > 0:
-        cambio, rel_txt = f"aumento de {var:.2f} puntos porcentuales", "un aumento relativo"
-    else:
-        cambio, rel_txt = "variación nula", "una variación relativa"
-    c.p_anual = [
-        ("La Tasa de Desocupación (TD) de Jalisco en el ", 0),
-        (f"{ORDINAL[trim]} Trimestre {anio}", 1), (" fue de ", 0), (pct(J["td"], "td"), 1),
-        (", lo que representa una ", 0), (cambio, 1),
-        (" respecto al mismo trimestre del año anterior, que registró ", 0),
-        (pct(Ja["td"], "td"), 1), (f" ({c.ant}). Esto equivale a {rel_txt} del ", 0),
-        (f"{rel:.1f}%", 1), (" anual.", 0),
-    ]
-    c.p_nacional = [
-        (f"La TD nacional en el {c.act} fue de ", 0), (pct(N["td"], "td"), 1),
-        (". Jalisco se ubica ", 0),
-        (f"{abs(dif_nac):.2f} pp {'por debajo' if dif_nac < 0 else 'por encima'}"
-         if dif_nac else "en el mismo nivel", 1),
-        (" del promedio nacional." if dif_nac else " que el promedio nacional.", 0),
-    ]
     c.t_nacional = (
         ["Período", "Jalisco", "Nacional", "Diferencia (pp)"],
         [
@@ -108,19 +107,7 @@ def preparar(act: dict, ant: dict) -> SimpleNamespace:
     ents = sorted(act["entidades"], key=lambda e: e["td"])
     n = len(ents)
     rank = next(i for i, e in enumerate(ents, 1) if e["cve"] == JALISCO)
-    if rank <= 8:
-        zona = "entre las entidades con menor desocupación del país"
-    elif rank > n - 8:
-        zona = "entre las entidades con mayor desocupación del país"
-    else:
-        zona = "en la parte media de la tabla nacional"
     c.rank, c.n = rank, n
-    c.p_ranking = [
-        ("Con ", 0), (pct(J["td"], "td"), 1), (", Jalisco ocupa el ", 0),
-        (f"lugar {rank} de {n}", 1),
-        (f" entidades federativas ordenadas de menor a mayor tasa de desocupación; "
-         f"{rank - 1} entidades registraron tasas inferiores. Se ubica {zona}.", 0),
-    ]
     filas = lambda lista, inicio: [[str(i), e["nombre"], pct(e["td"], "td")]
                                     for i, e in enumerate(lista, inicio)]
     c.t_menor = filas(ents[:5], 1)
@@ -132,18 +119,6 @@ def preparar(act: dict, ant: dict) -> SimpleNamespace:
     # ── Comparativo regional ──────────────────────────────────────────────
     reg = [e for e in ents if e["cve"] in REGION]
     media = round(sum(r(e["td"], "td") for e in reg) / len(reg), 2)
-    rank_reg = next(i for i, e in enumerate(reg, 1) if e["cve"] == JALISCO)
-    d_media = round(r(J["td"], "td") - media, 2)
-    if abs(d_media) < 0.05:
-        frase_media = ", prácticamente igual a la tasa jalisciense."
-    else:
-        frase_media = (f"; Jalisco se ubica {abs(d_media):.2f} pp "
-                       f"{'por debajo' if d_media < 0 else 'por encima'} de ella.")
-    c.p_region = [
-        ("Jalisco ocupa el ", 0), (f"{rank_reg}° lugar", 1),
-        (f" con menor TD entre las {len(reg)} entidades de la región Occidente / Centro-Bajío. "
-         "La media regional es ", 0), (f"{media:.2f}%", 1), (frase_media, 0),
-    ]
     c.t_region = [
         [str(i), e["nombre"] + (" ←" if e["cve"] == JALISCO else ""), pct(e["td"], "td"),
          signo(round(r(e["td"], "td") - media, 2))]
@@ -156,44 +131,9 @@ def preparar(act: dict, ant: dict) -> SimpleNamespace:
          signo(dif(J[k], Ja[k], k), DECIMALES[k]), pct(N[k], k)]
         for k in NOMBRES
     ]
-    v = {k: dif(J[k], Ja[k], k) for k in NOMBRES}
-    rank_sub = next(i for i, e in enumerate(sorted(act["entidades"], key=lambda e: e["subocupacion"]), 1)
-                    if e["cve"] == JALISCO)
-    d_til = dif(J["til1"], N["til1"], "til1")
-    sube = lambda x, si, no: si if x > 0 else no
-    c.notas = [
-        f"La TD {sube(v['td'], 'aumentó', 'disminuyó')} {abs(v['td']):.2f} pp: "
-        f"{sube(v['td'], 'más', 'menos')} personas buscan activamente empleo sin encontrarlo, "
-        f"en proporción a la PEA. {sube(v['td'], 'Desfavorable.', 'Favorable.')}",
-        f"La TPEA {sube(v['tpea'], 'aumentó', 'disminuyó')} {abs(v['tpea']):.1f} pp: una proporción "
-        f"{sube(v['tpea'], 'mayor', 'menor')} de la población en edad de trabajar participó "
-        f"activamente en el mercado laboral en {c.act} frente a {c.ant}.",
-        f"La TIL1 {sube(v['til1'], 'aumentó', 'disminuyó')} {abs(v['til1']):.1f} pp: una proporción "
-        f"{sube(v['til1'], 'mayor', 'menor')} de los ocupados trabaja en la informalidad. "
-        f"Se mantiene {abs(d_til):.1f} pp {'por debajo' if d_til < 0 else 'por encima'} del "
-        f"promedio nacional ({pct(N['til1'], 'til1')})"
-        + ("; la tendencia merece seguimiento." if v["til1"] > 0 else "."),
-        f"La subocupación {sube(v['subocupacion'], 'subió', 'bajó')} {abs(v['subocupacion']):.1f} pp "
-        f"({pct(J['subocupacion'], 'subocupacion')}). "
-        + ("Es la tasa de subocupación más baja del país"
-           if rank_sub == 1 else f"Jalisco tiene la {rank_sub}ª tasa de subocupación más baja del país")
-        + f" (nacional: {pct(N['subocupacion'], 'subocupacion')}).",
-    ]
 
     # ── Indicadores por sexo ──────────────────────────────────────────────
     (H, Ha), (M, Ma) = c.sexo["hombres"], c.sexo["mujeres"]
-    brecha_td = dif(M["td"], H["td"], "td")
-    brecha_tpea = dif(M["tpea"], H["tpea"], "tpea")
-    c.p_sexo = [
-        (f"En el {c.act} la TD de las mujeres fue de ", 0), (pct(M["td"], "td"), 1),
-        (" y la de los hombres de ", 0), (pct(H["td"], "td"), 1),
-        (", una brecha de ", 0), (f"{signo(brecha_td)} pp", 1),
-        (" (mujeres menos hombres). La participación económica de las mujeres (", 0),
-        (pct(M["tpea"], "tpea"), 1),
-        (f") se ubica {abs(brecha_tpea):.1f} pp "
-         f"{'por debajo' if brecha_tpea < 0 else 'por encima'} de la de los hombres (", 0),
-        (pct(H["tpea"], "tpea"), 1), (").", 0),
-    ]
     c.t_sexo = [
         [CORTOS[k], pct(J[k], k), pct(H[k], k), pct(M[k], k),
          f"{signo(dif(M[k], H[k], k), DECIMALES[k])} pp"]
@@ -204,23 +144,61 @@ def preparar(act: dict, ant: dict) -> SimpleNamespace:
         for k in NOMBRES
     ]
 
-    c.fuentes = [
-        f"Fuente: INEGI | Encuesta Nacional de Ocupación y Empleo (ENOE), microdatos {c.ant} y {c.act}",
-        "Cálculos propios con la metodología de INEGI: población de 15 años y más, "
-        "factor de expansión trimestral",
-        "Jalisco (CVE 14) · Series originales (sin ajuste estacional), periodicidad trimestral",
-        f"Proyecto de Aplicación Profesional — Economía, ITESO · {anio}",
-    ]
+    # ── Población ocupada ─────────────────────────────────────────────────
+    c.t_ocupacion, c.nota_sectores = None, ""
+    c.ocupada_resumen = "n/d"
+    if dic and prev and all("ocupacion" in i["jalisco"] for i in (act, ant, dic, prev)):
+        _preparar_ocupacion(c, act, ant, dic, prev)
+
     return c
 
 
+def _preparar_ocupacion(c, act, ant, dic, prev):
+    O = lambda ind: ind["jalisco"]["ocupacion"]
+    o = O(act)
+
+    # Las tres vistas de comparación. En el T1, el cierre de diciembre y el
+    # trimestre anterior son el mismo (T4 del año anterior): una sola columna.
+    if dic["periodo"] == prev["periodo"]:
+        comparaciones = [dic, ant]
+    else:
+        comparaciones = [dic, ant, prev]
+
+    filas_def = [("Población ocupada total", lambda x: x["total"]),
+                 ("Formalidad", None),
+                 ("  Formal", lambda x: x["formal"]),
+                 ("  Informal", lambda x: x["informal"]),
+                 ("Sexo", None),
+                 ("  Hombres", lambda x: x["hombres"]),
+                 ("  Mujeres", lambda x: x["mujeres"]),
+                 ("Actividad económica", None)]
+    filas_def += [(f"  {nombre}", lambda x, k=str(k): x["sectores"][k]) for k, nombre in SECTORES.items()]
+    if o["sector_no_especificado"] > 0:
+        filas_def.append(("  No especificado", lambda x: x["sector_no_especificado"]))
+
+    encabezados = ["Concepto", c.act] + [f"vs {etiqueta(i['periodo'])}" for i in comparaciones]
+    filas, grupos = [], []
+    for nombre, valor in filas_def:
+        if valor is None:
+            grupos.append(len(filas))
+            filas.append([nombre] + [""] * (len(encabezados) - 1))
+        else:
+            filas.append([nombre, miles(valor(o))] + [var_personas(valor(o), valor(O(i))) for i in comparaciones])
+    c.t_ocupacion = (encabezados, filas)
+    c.grupos_ocupacion = [0] + grupos           # filas en negritas en el Word
+
+    # Nota breve: sectores con muy pocos casos en la muestra (menos del 1% de los ocupados)
+    chicos = [nombre for k, nombre in SECTORES.items() if o["sectores"][str(k)] < 0.01 * o["total"]]
+    if o["sector_no_especificado"] > 0:
+        chicos.append("No especificado")
+    if chicos:
+        c.nota_sectores = f"Sectores con pocos casos ({', '.join(chicos)}): variaciones poco confiables."
+
+    total, total_ant = o["total"], O(ant)["total"]
+    c.ocupada_resumen = f"{miles(total)} personas ({cambio_pct(total, total_ant)} anual)"
+
+
 # ── Salida .txt ───────────────────────────────────────────────────────────────
-
-def _parrafo_txt(partes, ancho=95):
-    # Los espacios dentro de negritas se protegen para no partir un *...* en dos líneas
-    texto = "".join(f"*{t.replace(' ', chr(0))}*" if b else t for t, b in partes)
-    return textwrap.fill(texto, ancho, break_on_hyphens=False).replace(chr(0), " ")
-
 
 def _tabla_txt(encabezados, filas):
     anchos = [max(len(str(x)) for x in col) for col in zip(encabezados, *filas)]
@@ -234,40 +212,35 @@ def generar_txt(c: SimpleNamespace, ruta):
     seccion = lambda titulo, sub="": s.extend(
         ["", REGLA, f"*{titulo}*"] + ([sub] if sub else []) + [REGLA, ""])
 
-    s += [f"*{c.titulo}*", "",
-          "_*Cifras en porcentaje (%) de la Población Económicamente Activa (PEA)._",
-          "_*Series originales (sin ajuste estacional), periodicidad trimestral._"]
+    s += [f"*{c.titulo}*", "", f"_*{SERIES}_"]
 
     seccion("Análisis Anual", "Último trimestre disponible vs mismo trimestre del año anterior.")
-    s += [_parrafo_txt(c.p_anual), "", _parrafo_txt(c.p_nacional), "",
-          f"*Comparativo Jalisco vs Nacional — {c.act}:*", _tabla_txt(*c.t_nacional)]
+    s += [f"*Comparativo Jalisco vs Nacional — {c.act}:*", _tabla_txt(*c.t_nacional)]
 
     seccion("Posicionamiento Nacional", f"TD de Jalisco vs entidades federativas — {c.act}")
-    s += [_parrafo_txt(c.p_ranking), "",
-          f"*Top 5 entidades con menor TD ({c.act}):*",
+    s += [f"*Top 5 entidades con menor TD ({c.act}):*",
           _tabla_txt(["Lugar", "Estado", "TD (%)"], c.t_menor), "",
           f"*Top 5 entidades con mayor TD ({c.act}):*",
           _tabla_txt(["Lugar", "Estado", "TD (%)"], c.t_mayor)]
 
     seccion(f"Comparativo Regional — Occidente / Centro-Bajío ({c.act})")
-    s += [_parrafo_txt(c.p_region), "",
-          _tabla_txt(["Lugar", "Estado", "TD (%)", "vs Media regional (pp)"], c.t_region)]
+    s += [_tabla_txt(["Lugar", "Estado", "TD (%)", "vs Media regional (pp)"], c.t_region)]
 
     seccion("Indicadores Complementarios del Mercado Laboral",
             f"Comparativo anual: {c.act} vs {c.ant} — Jalisco")
-    s += [_tabla_txt(["Indicador", c.ant, c.act, "Var. (pp)", f"Nacional {c.act}"], c.t_indicadores),
-          "", "Notas de interpretación:"]
-    s += [textwrap.fill(n, 95, initial_indent="· ", subsequent_indent="  ", break_on_hyphens=False) for n in c.notas]
+    s += [_tabla_txt(["Indicador", c.ant, c.act, "Var. (pp)", f"Nacional {c.act}"], c.t_indicadores)]
 
     seccion(f"Indicadores por Sexo — Jalisco {c.act}")
-    s += [_parrafo_txt(c.p_sexo), "",
-          _tabla_txt(["Indicador", "Total", "Hombres", "Mujeres", "Brecha M−H"], c.t_sexo), "",
+    s += [_tabla_txt(["Indicador", "Total", "Hombres", "Mujeres", "Brecha M−H"], c.t_sexo), "",
           f"*Variación anual por sexo ({c.ant} → {c.act}, pp):*",
-          _tabla_txt(["Indicador", "Hombres", "Mujeres"], c.t_sexo_var), "",
-          "_Las estimaciones por sexo a nivel estatal tienen mayor error de muestreo que el total; "
-          "las variaciones pequeñas deben interpretarse con cautela._"]
+          _tabla_txt(["Indicador", "Hombres", "Mujeres"], c.t_sexo_var), "", f"_{NOTA_SEXO}_"]
 
-    s += ["", ""] + [f"_{linea}_" for linea in c.fuentes]
+    if c.t_ocupacion:
+        seccion(f"Población Ocupada — Jalisco {c.act}", "Personas y variación (absoluta y %)")
+        s += [_tabla_txt(*c.t_ocupacion)]
+        if c.nota_sectores:
+            s += ["", f"_{c.nota_sectores}_"]
+
     Path(ruta).write_text("\n".join(s) + "\n", encoding="utf-8")
 
 
@@ -313,7 +286,7 @@ def _seccion(doc, titulo, sub=""):
         _run(p, f"  —  {sub}", T_CHICA)
 
 
-def _tabla(doc, encabezados, filas, anchos_cm, primera_izq=False):
+def _tabla(doc, encabezados, filas, anchos_cm, primera_izq=False, negritas=()):
     # El párrafo anterior (título de la tabla) se mantiene junto a la tabla
     doc.paragraphs[-1].paragraph_format.keep_with_next = True
     t = doc.add_table(rows=1 + len(filas), cols=len(encabezados))
@@ -330,7 +303,7 @@ def _tabla(doc, encabezados, filas, anchos_cm, primera_izq=False):
             p.alignment = WD_ALIGN_PARAGRAPH.LEFT if izq else WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = p.paragraph_format.space_after = Pt(2)
             p.paragraph_format.keep_with_next = i < ultima   # la tabla no se parte entre páginas
-            _run(p, str(valor), T_CHICA, bold=(i == 0))
+            _run(p, str(valor), T_CHICA, bold=(i == 0 or (i - 1) in negritas))
     _p(doc, antes=0, despues=4)
 
 
@@ -341,26 +314,19 @@ def generar_docx(c: SimpleNamespace, ruta):
         sec.left_margin = sec.right_margin = Cm(3.0)
 
     _p(doc, [(c.titulo, 1)], size=T_TITULO, antes=0, despues=4)
-    _p(doc, "Cifras en porcentaje (%) de la Población Económicamente Activa (PEA).",
-       T_CHICA, italic=True, antes=0, despues=1)
-    _p(doc, "Series originales (sin ajuste estacional), periodicidad trimestral.",
-       T_CHICA, italic=True, antes=0, despues=4)
+    _p(doc, SERIES, T_CHICA, italic=True, antes=0, despues=4)
 
     _seccion(doc, "Análisis Anual", "Último trimestre disponible vs mismo trimestre del año anterior")
-    _p(doc, c.p_anual)
-    _p(doc, c.p_nacional, despues=6)
     _p(doc, [(f"Comparativo Jalisco vs Nacional — {c.act}:", 1)])
     _tabla(doc, *c.t_nacional, [3.2, 3.5, 3.5, 4.5])
 
     _seccion(doc, "Posicionamiento Nacional", f"TD de Jalisco vs entidades federativas — {c.act}")
-    _p(doc, c.p_ranking, despues=5)
     _p(doc, [(f"Top 5 entidades con menor TD ({c.act}):", 1)])
     _tabla(doc, ["Lugar", "Estado", "TD (%)"], c.t_menor, [2.0, 8.5, 4.2], primera_izq=True)
     _p(doc, [(f"Top 5 entidades con mayor TD ({c.act}):", 1)])
     _tabla(doc, ["Lugar", "Estado", "TD (%)"], c.t_mayor, [2.0, 8.5, 4.2], primera_izq=True)
 
     _seccion(doc, f"Comparativo Regional — Occidente / Centro-Bajío ({c.act})")
-    _p(doc, c.p_region, despues=5)
     _tabla(doc, ["Lugar", "Estado", "TD (%)", "vs Media (pp)"], c.t_region,
            [2.0, 5.5, 3.0, 4.2], primera_izq=True)
 
@@ -368,22 +334,22 @@ def generar_docx(c: SimpleNamespace, ruta):
              f"Comparativo anual: {c.act} vs {c.ant} — Jalisco")
     _tabla(doc, ["Indicador", c.ant, c.act, "Var. (pp)", f"Nacional {c.act}"],
            c.t_indicadores, [5.5, 2.2, 2.2, 2.2, 2.6], primera_izq=True)
-    _p(doc, [("Notas de interpretación:", 1)], despues=2)
-    for nota in c.notas:
-        _p(doc, f"· {nota}", T_CHICA, antes=1, despues=1, sangria=1)
 
     _seccion(doc, f"Indicadores por Sexo — Jalisco {c.act}")
-    _p(doc, c.p_sexo, despues=5)
     _tabla(doc, ["Indicador", "Total", "Hombres", "Mujeres", "Brecha M−H"], c.t_sexo,
            [3.5, 2.6, 2.6, 2.6, 3.2], primera_izq=True)
     _p(doc, [(f"Variación anual por sexo ({c.ant} → {c.act}, pp):", 1)])
     _tabla(doc, ["Indicador", "Hombres", "Mujeres"], c.t_sexo_var, [3.5, 3.0, 3.0], primera_izq=True)
-    _p(doc, "Las estimaciones por sexo a nivel estatal tienen mayor error de muestreo que el total; "
-            "las variaciones pequeñas deben interpretarse con cautela.", T_CHICA, italic=True)
+    _p(doc, NOTA_SEXO, T_CHICA, italic=True, antes=0)
 
-    _regla(doc)
-    for linea in c.fuentes:
-        _p(doc, linea, T_CHICA, italic=True, antes=1, despues=1)
+    if c.t_ocupacion:
+        _seccion(doc, f"Población Ocupada — Jalisco {c.act}", "Personas y variación (absoluta y %)")
+        n_comp = len(c.t_ocupacion[0]) - 2
+        anchos = [4.6, 2.2] + [8.2 / n_comp] * n_comp
+        _tabla(doc, *c.t_ocupacion, anchos, primera_izq=True, negritas=c.grupos_ocupacion)
+        if c.nota_sectores:
+            _p(doc, c.nota_sectores, T_CHICA, italic=True, antes=0)
+
     doc.save(ruta)
 
 
@@ -391,7 +357,9 @@ def generar_docx(c: SimpleNamespace, ruta):
 
 def generar(periodo: str, carpeta_datos="datos", carpeta_salida="fichas") -> tuple[Path, Path]:
     anio, trim = map(int, re.fullmatch(r"(\d{4})_T(\d)", periodo).groups())
-    c = preparar(calcular(periodo, carpeta_datos), calcular(f"{anio - 1}_T{trim}", carpeta_datos))
+    previo = f"{anio - 1}_T4" if trim == 1 else f"{anio}_T{trim - 1}"
+    c = preparar(calcular(periodo, carpeta_datos), calcular(f"{anio - 1}_T{trim}", carpeta_datos),
+                 calcular(f"{anio - 1}_T4", carpeta_datos), calcular(previo, carpeta_datos))
     salida = Path(carpeta_salida)
     salida.mkdir(parents=True, exist_ok=True)
     txt, docx = salida / f"ficha_{periodo}.txt", salida / f"ficha_{periodo}.docx"

@@ -109,7 +109,10 @@ python pipeline_trimestral.py --periodo 2026_T3  # un trimestre específico
 | `datos/indicadores_AAAA_T#.json` | Todos los indicadores calculados del trimestre |
 
 La ficha incluye: análisis anual de la TD, comparativo con el nacional, posición entre las 32 entidades,
-comparativo regional (Occidente / Centro-Bajío), indicadores complementarios y **indicadores por sexo**.
+comparativo regional (Occidente / Centro-Bajío), indicadores complementarios, **indicadores por sexo**
+y **población ocupada** en número de personas (total, formal/informal, por sexo y por 11 sectores de
+actividad), comparada contra el cierre de diciembre (T4 del año anterior), el mismo trimestre del año
+anterior y el trimestre inmediato anterior.
 
 ---
 
@@ -148,6 +151,9 @@ población de 15 años y más; ponderador: factor de expansión trimestral.
 - **TPEA** = PEA / población de 15 años y más
 - **TIL1** = ocupados en informalidad laboral / ocupados
 - **Subocupación** = ocupados subocupados / ocupados
+- **Población ocupada por sector** = clasificación de INEGI `rama_est2` (11 sectores)
+- La ENOE por entidad federativa es trimestral (la mensual solo es nacional); por eso la comparación
+  "contra el periodo anterior" es contra el trimestre anterior.
 
 Las estimaciones por sexo a nivel estatal tienen mayor error de muestreo que el total.
 

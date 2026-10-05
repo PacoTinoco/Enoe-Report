@@ -21,6 +21,8 @@ Metodología (la misma que usa INEGI para sus tabulados):
     · TPEA = PEA / población de 15 años y más
     · TIL1 = ocupados en informalidad (emp_ppal = 1) / ocupados (clase2 = 1)
     · Subocupación = ocupados subocupados (sub_o = 1) / ocupados
+    · Población ocupada de Jalisco en personas: total, formal/informal (emp_ppal),
+      por sexo y por sector de actividad (rama_est2, 11 sectores de INEGI)
 """
 
 import argparse
@@ -55,7 +57,22 @@ ENTIDADES = {
 REGION = [1, 6, 11, 14, 16, 18, 24, 32]
 
 COLUMNAS = ["r_def", "c_res", "eda", "sex", "cve_ent", "fac_tri",
-            "clase1", "clase2", "emp_ppal", "sub_o"]
+            "clase1", "clase2", "emp_ppal", "sub_o", "rama_est2"]
+
+# Sectores de actividad económica (catálogo rama_est2 de la ENOE), con nombres cortos
+SECTORES = {
+    1: "Agropecuario",
+    2: "Ind. extractiva y electricidad",
+    3: "Manufactura",
+    4: "Construcción",
+    5: "Comercio",
+    6: "Restaurantes y alojamiento",
+    7: "Transportes y comunicaciones",
+    8: "Serv. profesionales y financ.",
+    9: "Servicios sociales",
+    10: "Servicios diversos",
+    11: "Gobierno y org. internac.",
+}
 
 
 # ── Períodos y descarga ───────────────────────────────────────────────────────
@@ -143,6 +160,23 @@ def _tasas(df: pd.DataFrame) -> dict:
     }
 
 
+def _ocupacion(df: pd.DataFrame) -> dict:
+    """Población ocupada en número de personas, desagregada."""
+    oc = df[df.clase2 == 1]
+    w = oc.fac_tri
+    sectores = {str(k): int(w[oc.rama_est2 == k].sum()) for k in SECTORES}
+    total = int(w.sum())
+    return {
+        "total":    total,
+        "formal":   int(w[oc.emp_ppal == 2].sum()),
+        "informal": int(w[oc.emp_ppal == 1].sum()),
+        "hombres":  int(w[oc.sex == 1].sum()),
+        "mujeres":  int(w[oc.sex == 2].sum()),
+        "sectores": sectores,
+        "sector_no_especificado": total - sum(sectores.values()),
+    }
+
+
 def calcular(periodo: str, carpeta: str | Path = "datos") -> dict:
     """
     Devuelve (y guarda en datos/indicadores_AAAA_T#.json):
@@ -156,7 +190,9 @@ def calcular(periodo: str, carpeta: str | Path = "datos") -> dict:
     carpeta = Path(carpeta)
     cache = carpeta / f"indicadores_{periodo}.json"
     if cache.exists():
-        return json.loads(cache.read_text(encoding="utf-8"))
+        guardado = json.loads(cache.read_text(encoding="utf-8"))
+        if "ocupacion" in guardado["jalisco"]:      # los archivos viejos no la traen: se recalcula
+            return guardado
 
     df = leer_sdem(descargar_microdatos(periodo, carpeta))
     jal = df[df.cve_ent == JALISCO]
@@ -167,6 +203,7 @@ def calcular(periodo: str, carpeta: str | Path = "datos") -> dict:
             "total":   _tasas(jal),
             "hombres": _tasas(jal[jal.sex == 1]),
             "mujeres": _tasas(jal[jal.sex == 2]),
+            "ocupacion": _ocupacion(jal),
         },
         "nacional": _tasas(df),
         "entidades": [
