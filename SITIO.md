@@ -55,3 +55,14 @@ genere `docs/data.json`.
 python construir_sitio.py
 python -m http.server -d docs 8000      # abrir http://localhost:8000
 ```
+
+## Seguimiento del robot
+
+La sección **Seguimiento del robot** muestra la próxima publicación esperada de INEGI (según
+`calendario_enoe.json`), cómo busca el robot y un historial de revisiones. Cada ejecución del robot
+anota una línea en `historial_robot.json` (fecha, quién la disparó, resultado y detalle; máximo 90) y
+`construir_sitio.py` la incluye en `docs/data.json`. Además, la página consulta la API pública de
+GitHub para mostrar también ejecuciones que fallaron antes de poder escribir su detalle.
+
+Cada ficha muestra su **fecha de generación** (guardada en `procesados.json`).
+

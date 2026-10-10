@@ -26,11 +26,13 @@ Uso:
 
 import argparse
 import configparser
+import json
 import os
 import re
 import sys
 import time
 from datetime import date, datetime
+from pathlib import Path
 
 import calendario
 from calcular_indicadores import publicado
@@ -38,6 +40,9 @@ from pipeline_trimestral import CONFIG, borrar_ficha, detectar_periodo, ejecutar
 
 HORA_LIMITE = 10          # hasta qué hora (CDMX) esperar el día de publicación
 ESPERA_SEG  = 5 * 60      # cada cuánto revisar
+HISTORIAL   = Path(__file__).parent / "historial_robot.json"   # lo que encontró el robot en cada ejecución
+MAX_HISTORIAL = 90
+MENSAJES: list[str] = []
 
 
 def siguiente(periodo: str) -> str:
@@ -48,12 +53,64 @@ def siguiente(periodo: str) -> str:
 def resumen(texto: str):
     """Imprime y, si corre en GitHub Actions, lo agrega al resumen de la ejecución."""
     print(texto)
+    MENSAJES.append(texto)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write(texto + "\n\n")
 
 
+def _limpiar(texto: str) -> str:
+    """Quita emojis y símbolos del inicio ('✅ Ficha...' → 'Ficha...')."""
+    return re.sub(r"^[^\w¿¡(]+", "", texto).strip()
+
+
+def _tipo(mensajes: list[str], error: str | None) -> str:
+    if error:
+        return "error"
+    texto = " ".join(mensajes)
+    if "generada" in texto:
+        return "generada"
+    if "borrada" in texto or "No había ficha" in texto:
+        return "borrada"
+    if "ya fue procesado" in texto:
+        return "ya_procesada"
+    return "sin_publicacion"
+
+
+def registrar_historial(error: str | None = None):
+    """Agrega esta ejecución a historial_robot.json (solo en GitHub Actions)."""
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return
+    try:
+        historial = json.loads(HISTORIAL.read_text(encoding="utf-8")) if HISTORIAL.exists() else []
+        repo, corrida = os.environ.get("GITHUB_REPOSITORY", ""), os.environ.get("GITHUB_RUN_ID", "")
+        detalle = [_limpiar(m) for m in MENSAJES] + ([_limpiar(error)] if error else [])
+        historial.insert(0, {
+            "id": int(corrida) if corrida.isdigit() else None,
+            "fecha": calendario.ahora_cdmx().isoformat(timespec="seconds"),
+            "evento": os.environ.get("GITHUB_EVENT_NAME", ""),
+            "tipo": _tipo(MENSAJES, error),
+            "detalle": " · ".join(d for d in detalle if d)[:400],
+            "url": f"https://github.com/{repo}/actions/runs/{corrida}" if repo and corrida else "",
+        })
+        HISTORIAL.write_text(json.dumps(historial[:MAX_HISTORIAL], ensure_ascii=False, indent=1), encoding="utf-8")
+    except Exception as e:                       # el historial nunca debe tumbar al robot
+        print(f"(No se pudo guardar el historial: {e})")
+
+
 def main():
+    error = None
+    try:
+        _main()
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            error = str(e.code)
+        raise
+    finally:
+        registrar_historial(error)
+
+
+def _main():
     ap = argparse.ArgumentParser(description="Robot ENOE Jalisco")
     ap.add_argument("--periodo", help="AAAA_T# — procesar este trimestre")
     ap.add_argument("--forzar", action="store_true", help="Rehacer aunque ya esté procesado")

@@ -11,7 +11,7 @@
 //
 // Rutas:
 //   GET  /estado   → últimas ejecuciones del robot
-//   POST /generar  → { periodo, correo, forzar, clave }
+//   POST /generar  → { periodo, correo, forzar, sinMail, clave }
 //   POST /borrar   → { periodo, clave }
 
 const WORKFLOW = "robot.yml";
@@ -77,7 +77,7 @@ export default {
         const correos = String(d.correo || "").split(",").map((c) => c.trim()).filter(Boolean);
         if (correos.length > 5) return responder({ error: "Máximo 5 correos." }, 400);
         if (!correos.every((c) => RE_CORREO.test(c))) return responder({ error: "Revisa el correo: parece tener un error." }, 400);
-        inputs = { periodo, forzar: String(Boolean(d.forzar)), sin_email: "false", destinatario: correos.join(",") };
+        inputs = { periodo, forzar: String(Boolean(d.forzar)), sin_email: String(Boolean(d.sinMail)), destinatario: correos.join(",") };
       }
 
       const desde = new Date().toISOString();

@@ -4,49 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mercado laboral · Jalisco</title>
-<meta name="description" content="Indicadores laborales de Jalisco a partir de la ENOE (INEGI): desocupación, población ocupada, informalidad y fichas trimestrales.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23173a63'/><rect x='7' y='17' width='4' height='8' rx='1' fill='white'/><rect x='14' y='11' width='4' height='14' rx='1' fill='white'/><rect x='21' y='6' width='4' height='19' rx='1' fill='white'/></svg>">
+<meta name="description" content="Indicadores laborales de Jalisco a partir de la ENOE (INEGI): desocupación, población ocupada, informalidad, fichas trimestrales y seguimiento del robot.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23173a63'/><rect x='7' y='17' width='4' height='8' rx='1' fill='white'/><rect x='14' y='11' width='4' height='14' rx='1' fill='white'/><rect x='21' y='6' width='4' height='19' rx='1' fill='white'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root {
     color-scheme: light;
     --page: #f4f5f7;
     --surface: #ffffff;
-    --surface-2: #f8f9fa;
+    --surface-2: #f7f8fa;
     --ink: #0f1720;
     --ink-2: #4b5563;
-    --muted: #8a8f98;
-    --line: #e5e7eb;
-    --grid: #eceef1;
+    --muted: #7b828d;
+    --line: #e4e7ec;
+    --grid: #edf0f3;
     --brand: #173a63;
-    --brand-ink: #ffffff;
     --accent: #2a78d6;
     --accent-soft: #e8f1fc;
     --serie-1: #2a78d6;       /* Jalisco / Hombres */
     --serie-2: #eb6834;       /* Mujeres */
     --resto: #c9ced6;         /* otras entidades */
-    --sube: #2a78d6;          /* diverging: aumento */
-    --baja: #e34948;          /* diverging: disminución */
+    --sube: #2a78d6;          /* aumento */
+    --baja: #e34948;          /* disminución */
     --bien: #006300;
     --mal: #b42318;
-    --aviso-bg: #fff8e6;
-    --aviso-ink: #7a5300;
-    --radius: 12px;
-    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+    --ok-bg: #e6f5ea;   --ok-ink: #0b5a23;
+    --info-bg: #e8f1fc; --info-ink: #1c4f93;
+    --warn-bg: #fff4d6; --warn-ink: #7a5300;
+    --err-bg: #fdecea;  --err-ink: #8a1c13;
+    --neutral-bg: #eef0f3; --neutral-ink: #4b5563;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.07);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --page: #0f1115; --surface: #171a20; --surface-2: #1d2128;
-      --ink: #eef0f3; --ink-2: #b9bec7; --muted: #8a8f98; --line: #2a2f37; --grid: #252a31;
-      --brand: #10233d; --accent: #3987e5; --accent-soft: #1b2a3f;
+      --page: #0e1116; --surface: #161a21; --surface-2: #1c2129;
+      --ink: #eef0f3; --ink-2: #b9bec7; --muted: #8a8f98; --line: #2a2f37; --grid: #242932;
+      --brand: #2a4f7e; --accent: #3987e5; --accent-soft: #1a2a40;
       --serie-1: #3987e5; --serie-2: #d95926; --resto: #4a515c;
       --sube: #3987e5; --baja: #e66767; --bien: #3ccf6e; --mal: #ff8a80;
-      --aviso-bg: #2b2414; --aviso-ink: #f2c66d;
+      --ok-bg: #12301d; --ok-ink: #8be3a6;
+      --info-bg: #1a2a40; --info-ink: #9cc4f5;
+      --warn-bg: #33290f; --warn-ink: #f2c66d;
+      --err-bg: #3a1a17; --err-ink: #ffb4ab;
+      --neutral-bg: #232830; --neutral-ink: #b9bec7;
       --shadow: none;
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; }
   body {
     background: var(--page); color: var(--ink);
@@ -54,63 +61,92 @@
     -webkit-font-smoothing: antialiased;
   }
   a { color: var(--accent); }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+  button { font: inherit; }
 
-  /* Encabezado */
-  header { background: var(--brand); color: var(--brand-ink); }
-  header .wrap { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding-top: 22px; padding-bottom: 18px; flex-wrap: wrap; }
-  header h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.01em; }
-  header p { margin: 2px 0 0; font-size: 13px; opacity: .78; }
-  .selector-periodo { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-  .selector-periodo select {
-    font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); background: #fff;
-    border: 0; border-radius: 8px; padding: 7px 30px 7px 12px; cursor: pointer;
+  /* ── Estructura: barra lateral + contenido ── */
+  .app { display: grid; grid-template-columns: 256px minmax(0, 1fr); min-height: 100vh; }
+  .side {
+    position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 22px;
+    background: var(--surface); border-right: 1px solid var(--line); padding: 22px 14px 18px;
   }
-  .franja { background: var(--brand); border-top: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.85); font-size: 13px; }
-  .franja .wrap { padding-top: 8px; padding-bottom: 8px; display: flex; gap: 18px; flex-wrap: wrap; }
-
-  /* Pestañas */
-  nav.tabs { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
-  nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; }
-  nav.tabs button {
-    font: inherit; font-weight: 550; color: var(--ink-2); background: none; border: 0;
-    padding: 14px 14px 12px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+  .brand { display: flex; gap: 11px; align-items: center; padding: 0 8px; }
+  .logo { width: 38px; height: 38px; border-radius: 11px; background: var(--brand); display: grid; place-items: center; flex: none; }
+  .brand b { display: block; font-size: 15px; line-height: 1.2; }
+  .brand small { color: var(--muted); font-size: 12px; }
+  .nav { display: grid; gap: 3px; }
+  .nav button {
+    display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+    background: none; border: 0; border-radius: 10px; padding: 10px 12px; cursor: pointer;
+    font-weight: 550; color: var(--ink-2);
   }
-  nav.tabs button:hover { color: var(--ink); }
-  nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav button svg { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .nav button:hover { background: var(--surface-2); color: var(--ink); }
+  .nav button[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+  .side-foot { margin-top: auto; }
+  .prox-mini { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+  .prox-mini small { display: block; color: var(--muted); font-size: 12px; }
+  .prox-mini b { display: block; font-size: 17px; margin: 2px 0; }
+  .prox-mini span { font-size: 12px; color: var(--ink-2); }
 
-  main.wrap { padding-top: 24px; padding-bottom: 48px; }
+  .content { padding: 28px 34px 40px; min-width: 0; max-width: 1180px; width: 100%; }
+  .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  .top h1 { margin: 0; font-size: 26px; font-weight: 680; letter-spacing: -.02em; }
+  .top p { margin: 3px 0 0; color: var(--ink-2); }
+  .periodo { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+  .periodo select {
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 32px 8px 14px; cursor: pointer; box-shadow: var(--shadow);
+  }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: minmax(0, 1fr); }
+    .side { min-width: 0; max-width: 100vw; position: sticky; z-index: 10; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+    .brand { padding: 0; } .logo { width: 32px; height: 32px; }
+    .nav { display: flex; overflow-x: auto; width: 100%; gap: 2px; padding-bottom: 0; order: 3; }
+    .nav button { width: auto; white-space: nowrap; border-radius: 8px 8px 0 0; padding: 10px 12px; }
+    .nav button[aria-current="page"] { background: none; box-shadow: inset 0 -2px 0 var(--accent); }
+    .side-foot { display: none; }
+    .content { padding: 20px 16px 36px; }
+    .top h1 { font-size: 22px; }
+  }
+
   section.panel { display: none; }
   section.panel.activo { display: block; }
 
+  /* ── Rejillas y tarjetas ── */
   .grid { display: grid; gap: 16px; align-items: start; }
-  .g2i { grid-template-columns: 1fr 1fr; }
   .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .g2 { grid-template-columns: 3fr 2fr; }
-  @media (max-width: 960px) { .g4, .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g2, .g2i { grid-template-columns: 1fr; } }
-  @media (max-width: 520px) { .g4, .g5 { grid-template-columns: 1fr; } .wrap { padding: 0 16px; } }
+  .g2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .g21 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  .grid.g4 > .card, .grid.g5 > .card { align-self: stretch; }
+  @media (max-width: 1100px) { .g4, .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g21 { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .g4, .g5, .g2 { grid-template-columns: 1fr; } }
+  .espacio { height: 16px; }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; min-width: 0; }
   .card h2 { margin: 0; font-size: 16px; font-weight: 650; }
   .card .sub { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; }
   .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-  .espacio { height: 16px; }
 
-  /* Tarjetas de indicador */
-  .grid.g4 > .card, .grid.g5 > .card { align-self: stretch; }
+  .hero { background: var(--accent-soft); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; display: grid; gap: 4px; border-left: 4px solid var(--accent); }
+  .hero p { margin: 0; font-size: 15.5px; }
+  .hero p + p { color: var(--ink-2); font-size: 14.5px; }
+
   .kpi .lbl { font-size: 13px; color: var(--ink-2); margin: 0; }
-  .kpi .val { font-size: 30px; font-weight: 650; letter-spacing: -.02em; margin: 4px 0 2px; }
-  .kpi.chica .val { font-size: 22px; }
+  .kpi .val { font-size: 30px; font-weight: 680; letter-spacing: -.02em; margin: 4px 0 2px; }
+  .kpi.chica .val { font-size: 23px; }
   .kpi .delta { font-size: 13px; font-weight: 600; }
   .kpi .delta span { font-weight: 400; color: var(--muted); }
   .kpi .extra { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .spark { width: 100%; height: 34px; display: block; margin-top: 10px; overflow: visible; }
+  .spark polyline { fill: none; stroke: var(--serie-1); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .spark circle { fill: var(--serie-1); stroke: var(--surface); stroke-width: 2; }
   .bien { color: var(--bien); } .mal { color: var(--mal); } .neutro { color: var(--ink-2); }
 
-  /* Controles segmentados */
-  .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; flex-wrap: wrap; }
-  .seg button { font: inherit; font-size: 13px; font-weight: 550; color: var(--ink-2); background: none; border: 0; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
-  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+  .seg button { font-size: 13px; font-weight: 550; color: var(--ink-2); background: none; border: 0; border-radius: 7px; padding: 5px 11px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
   .seg button:disabled { opacity: .4; cursor: not-allowed; }
   .controles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
 
@@ -119,10 +155,9 @@
   .leyenda { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
   .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 
-  /* Tablas */
   .tabla-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { padding: 8px 9px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th, td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
   th:first-child, td:first-child { text-align: left; }
   th { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .03em; background: var(--surface-2); }
   th.ordenable { cursor: pointer; user-select: none; }
@@ -131,18 +166,27 @@
   tr.grupo td { font-weight: 650; background: var(--surface-2); color: var(--ink); }
   tr.sangria td:first-child { padding-left: 22px; }
   tr.poco td { color: var(--muted); }
+  td.txt, th.txt { text-align: left; white-space: normal; }
+  td.detalle { color: var(--ink-2); font-size: 13px; min-width: 240px; }
   .nota { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+
+  .badge { display: inline-block; font-size: 12px; font-weight: 650; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .badge.info { background: var(--info-bg); color: var(--info-ink); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .badge.err { background: var(--err-bg); color: var(--err-ink); }
+  .badge.neutral { background: var(--neutral-bg); color: var(--neutral-ink); }
 
   /* Fichas */
   .fichas { display: grid; gap: 12px; }
-  .ficha { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+  .ficha { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
   .ficha h3 { margin: 0; font-size: 15px; }
-  .ficha p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+  .ficha p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-2); }
   .ficha .acciones { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .btn { font-size: 14px; font-weight: 600; border-radius: 9px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
   .btn:hover { border-color: var(--muted); }
   .btn.primario { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn.primario:hover { filter: brightness(1.06); }
+  .btn.primario:hover { filter: brightness(1.07); }
   .btn.peligro { color: var(--mal); }
   .btn:disabled { opacity: .55; cursor: wait; }
   details.mas summary { font-size: 13px; color: var(--muted); cursor: pointer; list-style: none; padding: 4px 6px; border-radius: 6px; }
@@ -154,193 +198,247 @@
   form.generar label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
   form.generar .ayuda { font-weight: 400; color: var(--muted); font-size: 12px; }
   input[type=text], input[type=email], input[type=password], select.campo {
-    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; width: 100%;
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; width: 100%;
   }
-  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .check { display: flex !important; grid-template-columns: none; align-items: center; gap: 8px; font-weight: 500 !important; }
-  .estado { font-size: 14px; padding: 10px 12px; border-radius: 8px; display: none; }
+  input:focus, select:focus, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .check { display: flex !important; align-items: center; gap: 8px; font-weight: 500 !important; }
+  .estado { font-size: 14px; padding: 10px 12px; border-radius: 9px; display: none; }
   .estado.visible { display: block; }
-  .estado.info { background: var(--accent-soft); color: var(--ink); }
-  .estado.ok { background: #e7f6ec; color: #0b5a23; }
-  .estado.error { background: #fdecea; color: #8a1c13; }
-  .aviso { background: var(--aviso-bg); color: var(--aviso-ink); font-size: 13px; padding: 10px 12px; border-radius: 8px; }
-  ul.ejecuciones { list-style: none; margin: 0; padding: 0; font-size: 13px; }
-  ul.ejecuciones li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
-  ul.ejecuciones li:last-child { border-bottom: 0; }
+  .estado.info { background: var(--info-bg); color: var(--info-ink); }
+  .estado.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .estado.error { background: var(--err-bg); color: var(--err-ink); }
+  .estado.aviso { background: var(--warn-bg); color: var(--warn-ink); }
+  .estado a { color: inherit; font-weight: 600; }
 
-  footer { color: var(--muted); font-size: 12px; padding: 0 0 32px; }
+  /* Robot */
+  .prox-grande .fecha { font-size: 26px; font-weight: 680; letter-spacing: -.02em; margin: 6px 0 2px; }
+  .prox-grande .cuenta { display: inline-block; margin-top: 6px; }
+  .pasos { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: 14px; display: grid; gap: 8px; }
+  .pasos b { color: var(--ink); }
+  ul.lista { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13.5px; }
+  ul.lista li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+  ul.lista li span:last-child { color: var(--ink-2); }
+
+  details.glosario summary { cursor: pointer; font-weight: 650; font-size: 16px; list-style: none; display: flex; justify-content: space-between; }
+  details.glosario summary::after { content: "+"; color: var(--muted); font-size: 20px; line-height: 1; }
+  details.glosario[open] summary::after { content: "−"; }
+  details.glosario dl { margin: 14px 0 0; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 700px) { details.glosario dl { grid-template-columns: 1fr; } }
+  details.glosario dt { font-weight: 650; font-size: 14px; }
+  details.glosario dd { margin: 2px 0 0; color: var(--ink-2); font-size: 13.5px; }
+
+  footer { color: var(--muted); font-size: 12px; margin-top: 28px; }
   .cargando { padding: 80px 0; text-align: center; color: var(--muted); }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <div>
-      <h1>Mercado laboral · Jalisco</h1>
-      <p>Encuesta Nacional de Ocupación y Empleo (ENOE) · INEGI</p>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><rect x="3" y="13" width="4.5" height="8" rx="1.2"/><rect x="9.75" y="8" width="4.5" height="13" rx="1.2"/><rect x="16.5" y="3" width="4.5" height="18" rx="1.2"/></svg></span>
+      <div><b>Mercado laboral</b><small>Jalisco · ENOE</small></div>
     </div>
-    <label class="selector-periodo">Trimestre
-      <select id="periodo" aria-label="Trimestre"></select>
-    </label>
-  </div>
-  <div class="franja"><div class="wrap">
-    <span id="proxima"></span>
-    <span id="actualizado"></span>
-  </div></div>
-</header>
+    <nav class="nav" id="nav" aria-label="Secciones">
+      <button type="button" data-tab="resumen"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>Resumen</button>
+      <button type="button" data-tab="ocupacion"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M17.5 14c2.2 0 3.8 1.7 3.8 4"/></svg>Población ocupada</button>
+      <button type="button" data-tab="entidades"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Comparativo estatal</button>
+      <button type="button" data-tab="fichas"><svg viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/></svg>Fichas</button>
+      <button type="button" data-tab="robot"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>Seguimiento del robot</button>
+    </nav>
+    <div class="side-foot"><div class="prox-mini" id="prox-mini" role="button" tabindex="0" aria-label="Ver seguimiento del robot"></div></div>
+  </aside>
 
-<nav class="tabs" aria-label="Secciones">
-  <div class="wrap" role="tablist">
-    <button role="tab" data-tab="resumen" aria-selected="true">Resumen</button>
-    <button role="tab" data-tab="ocupacion" aria-selected="false">Población ocupada</button>
-    <button role="tab" data-tab="entidades" aria-selected="false">Comparativo estatal</button>
-    <button role="tab" data-tab="fichas" aria-selected="false">Fichas</button>
-  </div>
-</nav>
+  <div class="content">
+    <header class="top">
+      <div><h1 id="titulo-pagina"></h1><p id="sub-pagina"></p></div>
+      <label class="periodo" id="periodo-wrap">Trimestre
+        <select id="periodo" aria-label="Trimestre"></select>
+      </label>
+    </header>
 
-<main class="wrap">
-  <div id="cargando" class="cargando">Cargando datos…</div>
+    <main>
+      <div id="cargando" class="cargando">Cargando datos…</div>
 
-  <!-- ── Resumen ─────────────────────────────────────────────── -->
-  <section class="panel activo" id="resumen" role="tabpanel">
-    <div class="grid g4" id="kpis"></div>
-    <div class="espacio"></div>
-    <div class="card">
-      <div class="card-head">
-        <div><h2 id="titulo-serie">Evolución</h2><p class="sub" id="sub-serie"></p></div>
-        <div class="controles" style="margin:0">
-          <div class="seg" id="seg-indicador"></div>
-          <div class="seg" id="seg-rango"></div>
-        </div>
-      </div>
-      <div class="lienzo"><canvas id="graf-serie" aria-label="Serie histórica"></canvas></div>
-    </div>
-    <div class="espacio"></div>
-    <div class="grid g2i">
-      <div class="card">
-        <div class="card-head">
-          <div><h2>Indicadores por sexo</h2><p class="sub" id="sub-sexo"></p></div>
-          <div class="leyenda"><span><i style="background:var(--serie-1)"></i>Hombres</span><span><i style="background:var(--serie-2)"></i>Mujeres</span></div>
-        </div>
-        <div class="lienzo" style="height:280px"><canvas id="graf-sexo" aria-label="Indicadores por sexo"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><div><h2>Detalle por sexo</h2><p class="sub">Tasas en %; brecha en puntos porcentuales</p></div></div>
-        <div class="tabla-wrap"><table id="tabla-sexo"></table></div>
-        <p class="nota">Las estimaciones por sexo a nivel estatal tienen mayor error de muestreo que el total.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Población ocupada ───────────────────────────────────── -->
-  <section class="panel" id="ocupacion" role="tabpanel">
-    <div class="controles">
-      <div class="seg" id="seg-comparacion" aria-label="Comparar contra"></div>
-      <div class="seg" id="seg-unidad" aria-label="Unidad"></div>
-    </div>
-    <div class="grid g5" id="kpis-ocupacion"></div>
-    <div class="espacio"></div>
-      <div class="card">
-        <div class="card-head">
-          <div><h2>Cambio por actividad económica</h2><p class="sub" id="sub-sectores"></p></div>
-          <div class="leyenda"><span><i style="background:var(--sube)"></i>Aumento</span><span><i style="background:var(--baja)"></i>Disminución</span></div>
-        </div>
-        <div class="lienzo" style="height:380px"><canvas id="graf-sectores" aria-label="Cambio por actividad económica"></canvas></div>
-        <p class="nota" id="nota-grafica"></p>
-      </div>
-      <div class="espacio"></div>
-      <div class="card">
-        <div class="card-head"><div><h2>Tabla completa</h2><p class="sub">Clic en un encabezado para ordenar los sectores</p></div></div>
-        <div class="tabla-wrap"><table id="tabla-ocupacion"></table></div>
-        <p class="nota" id="nota-ocupacion"></p>
-      </div>
-  </section>
-
-  <!-- ── Comparativo estatal ─────────────────────────────────── -->
-  <section class="panel" id="entidades" role="tabpanel">
-    <div class="card">
-      <div class="card-head">
-        <div><h2 id="titulo-entidades">Comparativo estatal</h2><p class="sub" id="sub-entidades"></p></div>
-        <div class="seg" id="seg-ent"></div>
-      </div>
-      <div class="lienzo alto"><canvas id="graf-entidades" aria-label="Comparativo estatal"></canvas></div>
-    </div>
-  </section>
-
-  <!-- ── Fichas ──────────────────────────────────────────────── -->
-  <section class="panel" id="fichas" role="tabpanel">
-    <div class="grid g2">
-      <div class="card">
-        <div class="card-head"><div><h2>Fichas trimestrales</h2><p class="sub">Descarga la ficha en Word o en texto</p></div></div>
-        <div class="fichas" id="lista-fichas"></div>
-      </div>
-      <div>
+      <!-- ── Resumen ─────────────────────────────────────────── -->
+      <section class="panel" id="resumen">
+        <div class="hero" id="hero"></div>
+        <div class="grid g4" id="kpis"></div>
+        <div class="espacio"></div>
         <div class="card">
-          <div class="card-head"><div><h2>Generar una ficha</h2><p class="sub">El robot descarga los microdatos de INEGI, arma la ficha y la envía por correo (2–4 min).</p></div></div>
-          <div id="generar-desactivado" class="aviso" hidden>La generación desde la página todavía no está configurada. Mientras tanto, las fichas se generan solas cuando INEGI publica.</div>
-          <form class="generar" id="form-generar" novalidate>
-            <label>Trimestre
-              <select class="campo" id="g-periodo"></select>
-            </label>
-            <label>Correo para recibir la ficha <span class="ayuda">Opcional. También se envía a la lista del proyecto. Varios correos: sepáralos con coma.</span>
-              <input type="email" id="g-correo" placeholder="nombre@ejemplo.com" autocomplete="email" multiple>
-            </label>
-            <label class="check"><input type="checkbox" id="g-forzar"> Volver a generarla si ya existe</label>
-            <label>Clave
-              <input type="password" id="g-clave" autocomplete="current-password">
-            </label>
-            <button class="btn primario" id="g-boton" type="submit">Generar ficha</button>
-            <div class="estado" id="g-estado" role="status" aria-live="polite"></div>
-          </form>
+          <div class="card-head">
+            <div><h2 id="titulo-serie">Evolución</h2><p class="sub" id="sub-serie"></p></div>
+            <div class="controles" style="margin:0">
+              <div class="seg" id="seg-indicador"></div>
+              <div class="seg" id="seg-rango"></div>
+            </div>
+          </div>
+          <div class="lienzo"><canvas id="graf-serie" aria-label="Serie histórica"></canvas></div>
         </div>
         <div class="espacio"></div>
-        <div class="card" id="card-ejecuciones" hidden>
-          <div class="card-head"><div><h2>Actividad del robot</h2><p class="sub">Últimas ejecuciones (hora del centro de México)</p></div></div>
-          <ul class="ejecuciones" id="ejecuciones"></ul>
+        <div class="grid g2">
+          <div class="card">
+            <div class="card-head">
+              <div><h2>Indicadores por sexo</h2><p class="sub" id="sub-sexo"></p></div>
+              <div class="leyenda"><span><i style="background:var(--serie-1)"></i>Hombres</span><span><i style="background:var(--serie-2)"></i>Mujeres</span></div>
+            </div>
+            <div class="lienzo" style="height:280px"><canvas id="graf-sexo" aria-label="Indicadores por sexo"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><h2>Detalle por sexo</h2><p class="sub">Tasas en %; brecha en puntos porcentuales</p></div></div>
+            <div class="tabla-wrap"><table id="tabla-sexo"></table></div>
+            <p class="nota">Las estimaciones por sexo a nivel estatal tienen mayor error de muestreo que el total.</p>
+          </div>
         </div>
-      </div>
-    </div>
-  </section>
-</main>
+        <div class="espacio"></div>
+        <div class="card">
+          <details class="glosario">
+            <summary>¿Qué significa cada indicador?</summary>
+            <dl>
+              <div><dt>Tasa de desocupación</dt><dd>Porcentaje de la población económicamente activa (PEA) que no trabajó ni una hora en la semana, pero buscó trabajo.</dd></div>
+              <div><dt>Población económicamente activa (PEA)</dt><dd>Personas de 15 años y más que tienen un trabajo o lo están buscando.</dd></div>
+              <div><dt>Tasa de participación económica</dt><dd>Porcentaje de la población de 15 años y más que forma parte de la PEA.</dd></div>
+              <div><dt>Tasa de informalidad laboral</dt><dd>Porcentaje de las personas ocupadas cuyo empleo no está reconocido formalmente: sin acceso a seguridad social o en unidades económicas no registradas.</dd></div>
+              <div><dt>Tasa de subocupación</dt><dd>Porcentaje de las personas ocupadas que necesitan y están disponibles para trabajar más horas de las que su empleo les permite.</dd></div>
+              <div><dt>Puntos porcentuales (pp)</dt><dd>La diferencia entre dos tasas. Pasar de 2.7% a 2.4% es una baja de 0.3 pp.</dd></div>
+            </dl>
+          </details>
+        </div>
+      </section>
 
-<footer class="wrap">
-  Fuente: INEGI, Encuesta Nacional de Ocupación y Empleo (ENOE), microdatos trimestrales. Cifras de Jalisco estimadas con el factor de expansión trimestral.
-  Proyecto de Aplicación Profesional — ITESO.
-</footer>
+      <!-- ── Población ocupada ───────────────────────────────── -->
+      <section class="panel" id="ocupacion">
+        <div class="controles">
+          <div class="seg" id="seg-comparacion" aria-label="Comparar contra"></div>
+          <div class="seg" id="seg-unidad" aria-label="Unidad"></div>
+        </div>
+        <div class="grid g5" id="kpis-ocupacion"></div>
+        <div class="espacio"></div>
+        <div class="card">
+          <div class="card-head">
+            <div><h2>Cambio por actividad económica</h2><p class="sub" id="sub-sectores"></p></div>
+            <div class="leyenda"><span><i style="background:var(--sube)"></i>Aumento</span><span><i style="background:var(--baja)"></i>Disminución</span></div>
+          </div>
+          <div class="lienzo" style="height:380px"><canvas id="graf-sectores" aria-label="Cambio por actividad económica"></canvas></div>
+          <p class="nota" id="nota-grafica"></p>
+        </div>
+        <div class="espacio"></div>
+        <div class="card">
+          <div class="card-head"><div><h2>Tabla completa</h2><p class="sub">Clic en un encabezado para ordenar los sectores</p></div></div>
+          <div class="tabla-wrap"><table id="tabla-ocupacion"></table></div>
+          <p class="nota" id="nota-ocupacion"></p>
+        </div>
+      </section>
+
+      <!-- ── Comparativo estatal ─────────────────────────────── -->
+      <section class="panel" id="entidades">
+        <div class="card">
+          <div class="card-head">
+            <div><h2 id="titulo-entidades">Comparativo estatal</h2><p class="sub" id="sub-entidades"></p></div>
+            <div class="seg" id="seg-ent"></div>
+          </div>
+          <div class="lienzo alto"><canvas id="graf-entidades" aria-label="Comparativo estatal"></canvas></div>
+        </div>
+      </section>
+
+      <!-- ── Fichas ──────────────────────────────────────────── -->
+      <section class="panel" id="fichas">
+        <div class="grid g21">
+          <div class="card">
+            <div class="card-head"><div><h2>Fichas generadas</h2><p class="sub">Descarga la ficha en Word o léela en texto</p></div></div>
+            <div class="fichas" id="lista-fichas"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><h2>Generar una ficha</h2><p class="sub">El robot descarga los microdatos de INEGI, arma la ficha y la envía por correo (2–4 min).</p></div></div>
+            <form class="generar" id="form-generar" novalidate>
+              <label>Trimestre
+                <select class="campo" id="g-periodo"></select>
+              </label>
+              <label>Correo para recibir la ficha <span class="ayuda">Opcional. También se envía a la lista del proyecto. Varios correos: sepáralos con coma.</span>
+                <input type="email" id="g-correo" placeholder="nombre@ejemplo.com" autocomplete="email">
+              </label>
+              <label class="check"><input type="checkbox" id="g-sinmail"> Solo generar, sin enviar correo</label>
+              <label class="check"><input type="checkbox" id="g-forzar"> Volver a generarla si ya existe</label>
+              <label>Clave <span class="ayuda">Te la da el administrador del proyecto.</span>
+                <input type="password" id="g-clave" autocomplete="current-password">
+              </label>
+              <button class="btn primario" id="g-boton" type="submit">Generar ficha</button>
+              <div class="estado" id="g-estado" role="status" aria-live="polite"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Seguimiento del robot ───────────────────────────── -->
+      <section class="panel" id="robot">
+        <div class="grid g2">
+          <div class="card prox-grande">
+            <p class="sub" style="margin:0">Próxima publicación de la ENOE (INEGI)</p>
+            <div class="fecha" id="rb-fecha">—</div>
+            <div class="sub" id="rb-detalle"></div>
+            <span class="badge info cuenta" id="rb-cuenta" hidden></span>
+            <ul class="lista" id="rb-calendario"></ul>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><h2>¿Cómo busca el robot?</h2></div></div>
+            <ol class="pasos">
+              <li><b>Todos los días a las 06:00</b> (hora del centro de México) revisa si ya salieron los microdatos del trimestre pendiente.</li>
+              <li><b>El día de publicación</b> que marca el calendario de INEGI, vuelve a revisar <b>cada 5 minutos hasta las 10:00</b>.</li>
+              <li><b>Cuando están disponibles</b>, calcula los indicadores, genera la ficha, la manda por correo y actualiza esta página.</li>
+              <li>Si INEGI mueve la fecha sin avisar, lo detecta a la mañana siguiente. GitHub avisa por correo si el robot falla.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="espacio"></div>
+        <div class="card">
+          <div class="card-head"><div><h2>Historial de revisiones</h2><p class="sub" id="rb-sub-hist">Qué encontró el robot en cada ejecución (hora del centro de México)</p></div></div>
+          <div class="tabla-wrap"><table id="tabla-historial"></table></div>
+          <p class="nota">Las ejecuciones con error aparecen aunque el robot no haya alcanzado a escribir su detalle (por ejemplo, si GitHub no pudo iniciarlas).</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Fuente: INEGI, Encuesta Nacional de Ocupación y Empleo (ENOE), microdatos trimestrales. Cifras de Jalisco estimadas con el factor de expansión trimestral.
+      Proyecto de Aplicación Profesional — ITESO.
+    </footer>
+  </div>
+</div>
 
 <script>
 // ─── Configuración ─────────────────────────────────────────────────────────
-// URL del Cloudflare Worker que dispara el robot (ver SITIO.md). Vacía = generación desactivada.
-const WORKER_URL = "";
+// URL del Cloudflare Worker que dispara el robot (ver SITIO.md). Vacía = el formulario avisa que falta conectarlo.
+const WORKER_URL = "https://enoe-jalisco.jose-tinoco.workers.dev";
+const REPO = "PacoTinoco/Enoe-Report";
 
 // ─── Utilidades ────────────────────────────────────────────────────────────
 const $ = (s) => document.querySelector(s);
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const nf0 = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });
 const ORD = { 1: "1er", 2: "2°", 3: "3er", 4: "4°" };
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const IND = {
-  td:           { nombre: "Tasa de desocupación",        corto: "Desocupación",  unidad: "% de la PEA",                         subeEsBueno: false },
-  tpea:         { nombre: "Tasa de participación económica", corto: "Participación", unidad: "% de la población de 15 años y más", subeEsBueno: true },
-  til1:         { nombre: "Tasa de informalidad laboral", corto: "Informalidad",  unidad: "% de la población ocupada",           subeEsBueno: false },
-  subocupacion: { nombre: "Tasa de subocupación",         corto: "Subocupación",  unidad: "% de la población ocupada",           subeEsBueno: false },
+  td:           { nombre: "Tasa de desocupación",           corto: "Desocupación",  unidad: "% de la PEA" },
+  tpea:         { nombre: "Tasa de participación económica", corto: "Participación", unidad: "% de la población de 15 años y más" },
+  til1:         { nombre: "Tasa de informalidad laboral",   corto: "Informalidad",  unidad: "% de la población ocupada" },
+  subocupacion: { nombre: "Tasa de subocupación",           corto: "Subocupación",  unidad: "% de la población ocupada" },
 };
-
 const etiqueta = (p) => { const [a, t] = p.split("_T"); return `${ORD[t]} Trim ${a}`; };
 const anioAnterior = (p) => { const [a, t] = p.split("_T"); return `${+a - 1}_T${t}`; };
-const cierreDic = (p) => { const a = +p.split("_T")[0]; return `${a - 1}_T4`; };
+const cierreDic = (p) => `${+p.split("_T")[0] - 1}_T4`;
 const trimPrevio = (p) => { const [a, t] = p.split("_T").map(Number); return t === 1 ? `${a - 1}_T4` : `${a}_T${t - 1}`; };
 const pct = (v, d = 2) => `${v.toFixed(d)}%`;
 const signo = (v, d = 2) => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
 const signoN = (v) => (v > 0 ? "+" : v < 0 ? "−" : "±") + nf0.format(Math.abs(v));
-const compacto = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2)} M` : n >= 1e3 ? `${nf0.format(Math.round(n / 1e3))} mil` : nf0.format(n);
+const compacto = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)} M` : n >= 1e3 ? `${nf0.format(Math.round(n / 1e3))} mil` : nf0.format(n));
 const fechaCDMX = (iso) => {
   if (!iso) return null;
   const d = new Date(iso);
   if (isNaN(d)) return null;
   return d.toLocaleString("es-MX", { timeZone: "America/Mexico_City", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
 };
+const diaLargo = (d) => d.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City", day: "numeric", month: "long", year: "numeric" });
+const diaCorto = (d) => d.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City", day: "numeric", month: "short", year: "numeric" }).replace(".", "");
+
 function el(tag, attrs = {}, ...hijos) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -360,20 +458,29 @@ function segmentado(contenedor, opciones, valor, alCambiar) {
     contenedor.append(b);
   }
 }
-function clase(delta, subeEsBueno) {
-  if (Math.abs(delta) < 1e-9) return "neutro";
-  return (delta > 0) === subeEsBueno ? "bien" : "mal";
+const clase = (delta, subeEsBueno) => (Math.abs(delta) < 1e-9 ? "neutro" : (delta > 0) === subeEsBueno ? "bien" : "mal");
+
+function spark(valores) {
+  const ns = "http://www.w3.org/2000/svg", w = 220, h = 34, pad = 4;
+  const mn = Math.min(...valores), mx = Math.max(...valores), rango = mx - mn || 1;
+  const pts = valores.map((v, i) => [pad + (i * (w - 2 * pad)) / Math.max(valores.length - 1, 1), h - pad - ((v - mn) / rango) * (h - 2 * pad)]);
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`); svg.setAttribute("class", "spark"); svg.setAttribute("aria-hidden", "true");
+  const pl = document.createElementNS(ns, "polyline"); pl.setAttribute("points", pts.map((p) => p.join(",")).join(" "));
+  const c = document.createElementNS(ns, "circle"); c.setAttribute("cx", pts.at(-1)[0]); c.setAttribute("cy", pts.at(-1)[1]); c.setAttribute("r", "4");
+  svg.append(pl, c);
+  return svg;
+}
+function valoresSerie(k, hasta, n = 10) {
+  const fuente = k === "td" ? D.serie_td : D.serie_indicadores;
+  return fuente.filter((r) => r.periodo <= hasta && r[k] != null).slice(-n).map((r) => r[k]);
 }
 
-// ─── Estado ────────────────────────────────────────────────────────────────
+// ─── Estado y gráficas ─────────────────────────────────────────────────────
 let D = null;
-const S = { periodo: null, indicador: "td", rango: 10, comparacion: "anual", unidad: "personas", indEnt: "td", orden: null };
+const S = { tab: "resumen", periodo: null, indicador: "td", rango: 10, comparacion: "anual", unidad: "personas", indEnt: "td", orden: null };
 const graficas = {};
-
-function grafica(id, config) {
-  graficas[id]?.destroy();
-  graficas[id] = new Chart(document.getElementById(id), config);
-}
+function grafica(id, config) { graficas[id]?.destroy(); graficas[id] = new Chart(document.getElementById(id), config); }
 
 function baseChart() {
   Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
@@ -389,8 +496,6 @@ function baseChart() {
   Chart.defaults.plugins.legend.display = false;
   Chart.defaults.maintainAspectRatio = false;
 }
-
-// Etiqueta de valor al final de cada barra (horizontal)
 const etiquetasBarra = {
   id: "etiquetasBarra",
   afterDatasetsDraw(chart, _a, opts) {
@@ -398,30 +503,22 @@ const etiquetasBarra = {
     const { ctx } = chart;
     ctx.save();
     ctx.font = `600 11px ${Chart.defaults.font.family}`;
-    ctx.fillStyle = css("--ink-2");
-    ctx.textBaseline = "middle";
-    chart.data.datasets.forEach((ds, i) => {
-      chart.getDatasetMeta(i).data.forEach((bar, j) => {
-        const v = ds.data[j];
-        if (v == null) return;
-        const txt = opts.formato(v, j);
-        const neg = v < 0;
-        ctx.textAlign = neg ? "right" : "left";
-        ctx.fillText(txt, bar.x + (neg ? -6 : 6), bar.y);
-      });
-    });
+    ctx.fillStyle = css("--ink-2"); ctx.textBaseline = "middle";
+    chart.data.datasets.forEach((ds, i) => chart.getDatasetMeta(i).data.forEach((bar, j) => {
+      const v = ds.data[j]; if (v == null) return;
+      const neg = v < 0; ctx.textAlign = neg ? "right" : "left";
+      ctx.fillText(opts.formato(v, j), bar.x + (neg ? -6 : 6), bar.y);
+    }));
     ctx.restore();
   },
 };
-// Línea vertical de referencia (promedio nacional)
 const lineaReferencia = {
   id: "lineaReferencia",
   afterDatasetsDraw(chart, _a, opts) {
     if (!opts || opts.valor == null) return;
-    const { ctx, chartArea, scales } = chart;
-    const x = scales.x.getPixelForValue(opts.valor);
+    const { ctx, chartArea, scales } = chart, x = scales.x.getPixelForValue(opts.valor);
     ctx.save();
-    ctx.strokeStyle = css("--ink-2"); ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.strokeStyle = css("--ink-2"); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
     ctx.font = `600 11px ${Chart.defaults.font.family}`; ctx.fillStyle = css("--ink-2"); ctx.textAlign = "left";
     ctx.fillText(opts.texto, x + 5, chartArea.top + 10);
@@ -429,7 +526,15 @@ const lineaReferencia = {
   },
 };
 
-// ─── Carga ─────────────────────────────────────────────────────────────────
+// ─── Carga e inicio ────────────────────────────────────────────────────────
+const TABS = {
+  resumen:   { titulo: "Resumen del trimestre",  sub: () => `Jalisco · ${etiqueta(S.periodo)}`, periodo: true },
+  ocupacion: { titulo: "Población ocupada",      sub: () => `Jalisco · ${etiqueta(S.periodo)} · personas, formalidad, sexo y actividad económica`, periodo: true },
+  entidades: { titulo: "Comparativo estatal",    sub: () => `Las 32 entidades · ${etiqueta(S.periodo)}`, periodo: true },
+  fichas:    { titulo: "Fichas trimestrales",    sub: () => "Descarga la ficha informativa o genera una nueva", periodo: false },
+  robot:     { titulo: "Seguimiento del robot",  sub: () => "Qué busca, cuándo y qué encontró", periodo: false },
+};
+
 async function iniciar() {
   try {
     const r = await fetch(`data.json?v=${Date.now()}`, { cache: "no-store" });
@@ -442,82 +547,106 @@ async function iniciar() {
   baseChart();
   Chart.register(etiquetasBarra, lineaReferencia);
 
-  // Solo trimestres con su comparativo anual (si no hay ninguno, todos)
   const todos = Object.keys(D.periodos).sort().reverse();
-  const conAnual = todos.filter((p) => D.periodos[anioAnterior(p)]);
+  const conAnual = todos.filter((p) => D.periodos[anioAnterior(p)]);      // solo trimestres con su comparativo anual
   const disponibles = conAnual.length ? conAnual : todos;
   const sel = $("#periodo");
   for (const p of disponibles) sel.append(el("option", { value: p, text: etiqueta(p) }));
   S.periodo = disponibles[0];
   sel.addEventListener("change", () => { S.periodo = sel.value; render(); });
 
-  // Próxima publicación y última actualización
-  const ahora = new Date();
-  const prox = (D.calendario || []).find((c) => new Date(c.fecha) > ahora);
-  if (prox) {
-    const f = new Date(prox.fecha);
-    $("#proxima").textContent = `Próxima publicación de INEGI: ${etiqueta(prox.periodo)} — ${f.getDate()} ${MESES[f.getMonth()]} ${f.getFullYear()}, 06:00`;
-  }
-  const ultimaFicha = (D.fichas || []).map((f) => f.generada).filter(Boolean).sort().pop();
-  if (ultimaFicha) $("#actualizado").textContent = `Última ficha generada: ${fechaCDMX(ultimaFicha)} (hora CDMX)`;
-
-  // Pestañas
-  document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => abrirPestana(b.dataset.tab)));
-  const inicial = location.hash.replace("#", "");
-  if (["resumen", "ocupacion", "entidades", "fichas"].includes(inicial)) abrirPestana(inicial);
+  document.querySelectorAll("#nav button").forEach((b) => b.addEventListener("click", () => abrirPestana(b.dataset.tab)));
+  const mini = $("#prox-mini");
+  mini.addEventListener("click", () => abrirPestana("robot"));
+  mini.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirPestana("robot"); } });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { baseChart(); render(); });
 
   render();
   iniciarFichas();
+  renderRobot();
+  const inicial = location.hash.replace("#", "");
+  abrirPestana(TABS[inicial] ? inicial : "resumen");
 }
 
 function abrirPestana(id) {
-  document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
+  S.tab = id;
+  document.querySelectorAll("#nav button").forEach((b) => (b.dataset.tab === id ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
   document.querySelectorAll("section.panel").forEach((s) => s.classList.toggle("activo", s.id === id));
+  $("#periodo-wrap").hidden = !TABS[id].periodo;
+  $("#titulo-pagina").textContent = TABS[id].titulo;
+  $("#sub-pagina").textContent = TABS[id].sub();
+  document.title = `${TABS[id].titulo} · Mercado laboral Jalisco`;
   history.replaceState(null, "", `#${id}`);
+  window.scrollTo({ top: 0 });
   Object.values(graficas).forEach((g) => g.resize());
 }
 
 function render() {
-  renderResumen();
-  renderOcupacion();
-  renderEntidades();
+  renderResumen(); renderOcupacion(); renderEntidades(); renderProxima();
+  if (S.tab) $("#sub-pagina").textContent = TABS[S.tab].sub();
+}
+
+// ─── Próxima publicación ───────────────────────────────────────────────────
+function proximas() {
+  const ahora = Date.now();
+  return (D.calendario || []).map((c) => ({ periodo: c.periodo, fecha: new Date(c.fecha) })).filter((c) => c.fecha.getTime() > ahora).sort((a, b) => a.fecha - b.fecha);
+}
+function cuenta(fecha) {
+  const dias = Math.ceil((fecha.getTime() - Date.now()) / 864e5);
+  return dias <= 0 ? "es hoy" : dias === 1 ? "mañana" : `faltan ${dias} días`;
+}
+function renderProxima() {
+  const [p, ...resto] = proximas();
+  const mini = $("#prox-mini");
+  if (!p) {
+    mini.replaceChildren(el("small", { text: "Próxima publicación" }), el("b", { text: "Sin fecha" }), el("span", { text: "El calendario de INEGI no trae una fecha nueva." }));
+    $("#rb-fecha").textContent = "Sin fecha en el calendario";
+    return;
+  }
+  mini.replaceChildren(el("small", { text: "Próxima publicación de INEGI" }), el("b", { text: diaCorto(p.fecha) }), el("span", { text: `${etiqueta(p.periodo)} · ${cuenta(p.fecha)}` }));
+  $("#rb-fecha").textContent = diaLargo(p.fecha);
+  $("#rb-detalle").textContent = `Datos del ${etiqueta(p.periodo)} · se esperan a las 06:00 (hora del centro de México)`;
+  const c = $("#rb-cuenta"); c.textContent = cuenta(p.fecha); c.hidden = false;
+  $("#rb-calendario").replaceChildren(...resto.slice(0, 3).map((x) => el("li", {}, el("span", { text: `Después: ${etiqueta(x.periodo)}` }), el("span", { text: diaCorto(x.fecha) }))));
 }
 
 // ─── Resumen ───────────────────────────────────────────────────────────────
 function renderResumen() {
   const p = S.periodo, act = D.periodos[p], antP = anioAnterior(p), ant = D.periodos[antP];
-  const J = act.jalisco.total, Ja = ant?.jalisco.total;
+  const J = act.jalisco.total, Ja = ant?.jalisco.total, nac = act.nacional;
   const ents = [...act.entidades].sort((a, b) => a.td - b.td);
   const lugar = ents.findIndex((e) => e.nombre === "Jalisco") + 1;
   const oc = act.ocupacion, oca = ant?.ocupacion;
+  const dTd = Ja ? J.td - Ja.td : null, dOc = oca ? (oc.total / oca.total - 1) * 100 : null;
+
+  $("#hero").replaceChildren(
+    el("p", { text: `En el ${etiqueta(p)}, la desocupación en Jalisco fue de ${pct(J.td)}` + (dTd == null ? "" : `, ${Math.abs(dTd).toFixed(2)} pp ${dTd < 0 ? "menos" : "más"} que un año antes`) +
+      `. Ocupa el lugar ${lugar} de ${ents.length} entidades (1 = la menor desocupación) y está ${J.td < nac.td ? "por debajo" : "por encima"} del promedio nacional (${pct(nac.td)}).` }),
+    el("p", { text: `Hay ${compacto(oc.total)} personas ocupadas` + (dOc == null ? "" : ` (${signo(dOc, 1)}% frente al ${etiqueta(antP)})`) +
+      `; ${pct(J.til1, 1)} de ellas trabaja en la informalidad.` }));
 
   const tarjetas = [
-    { lbl: IND.td.nombre, val: pct(J.td), d: Ja && J.td - Ja.td, unidad: " pp", bueno: false,
-      extra: `Nacional ${pct(act.nacional.td)} · Lugar ${lugar} de ${ents.length} (1 = menor desocupación)` },
-    { lbl: "Población ocupada", val: compacto(oc.total), d: oca && (oc.total / oca.total - 1) * 100, unidad: "%", bueno: true, dec: 1,
-      extra: `${nf0.format(oc.total)} personas` },
-    { lbl: IND.til1.nombre, val: pct(J.til1, 1), d: Ja && J.til1 - Ja.til1, unidad: " pp", bueno: false,
-      extra: `Nacional ${pct(act.nacional.til1, 1)}` },
-    { lbl: IND.tpea.nombre, val: pct(J.tpea, 1), d: Ja && J.tpea - Ja.tpea, unidad: " pp", bueno: true,
-      extra: `Nacional ${pct(act.nacional.tpea, 1)}` },
+    { k: "td", lbl: IND.td.nombre, val: pct(J.td), d: dTd, unidad: " pp", bueno: false, extra: `Nacional ${pct(nac.td)} · Lugar ${lugar} de ${ents.length}` },
+    { k: "pob_ocupada", lbl: "Población ocupada", val: compacto(oc.total), d: dOc, unidad: "%", bueno: true, dec: 1, extra: `${nf0.format(oc.total)} personas` },
+    { k: "til1", lbl: IND.til1.nombre, val: pct(J.til1, 1), d: Ja && J.til1 - Ja.til1, unidad: " pp", bueno: false, extra: `Nacional ${pct(nac.til1, 1)}` },
+    { k: "tpea", lbl: IND.tpea.nombre, val: pct(J.tpea, 1), d: Ja && J.tpea - Ja.tpea, unidad: " pp", bueno: true, extra: `Nacional ${pct(nac.tpea, 1)}` },
   ];
-  const cont = $("#kpis");
-  cont.replaceChildren(...tarjetas.map((t) => el("div", { class: "card kpi" },
-    el("p", { class: "lbl", text: t.lbl }),
-    el("div", { class: "val", text: t.val }),
-    t.d == null ? el("div", { class: "delta neutro", text: "Sin dato del año anterior" })
-      : el("div", { class: `delta ${clase(t.d, t.bueno)}` }, `${t.d > 0 ? "▲" : t.d < 0 ? "▼" : "■"} ${signo(t.d, t.dec ?? 2)}${t.unidad} `, el("span", { text: `vs ${etiqueta(antP)}` })),
-    el("div", { class: "extra", text: t.extra }),
-  )));
+  $("#kpis").replaceChildren(...tarjetas.map((t) => {
+    const vals = valoresSerie(t.k, p);
+    return el("div", { class: "card kpi" },
+      el("p", { class: "lbl", text: t.lbl }),
+      el("div", { class: "val", text: t.val }),
+      t.d == null ? el("div", { class: "delta neutro", text: "Sin dato del año anterior" })
+        : el("div", { class: `delta ${clase(t.d, t.bueno)}` }, `${t.d > 0 ? "▲" : t.d < 0 ? "▼" : "■"} ${signo(t.d, t.dec ?? 2)}${t.unidad} `, el("span", { text: `vs ${etiqueta(antP)}` })),
+      el("div", { class: "extra", text: t.extra }),
+      vals.length > 2 ? spark(vals) : null);
+  }));
 
-  // Serie
   segmentado($("#seg-indicador"), Object.entries(IND).map(([k, v]) => ({ valor: k, texto: v.corto })), S.indicador, (v) => { S.indicador = v; renderSerie(); });
   renderSerie();
 
-  // Por sexo
-  const H = act.jalisco.hombres, M = act.jalisco.mujeres;
+  const H = act.jalisco.hombres, M = act.jalisco.mujeres, claves = Object.keys(IND);
   $("#sub-sexo").textContent = `Jalisco, ${etiqueta(p)} · tasas en %`;
-  const claves = Object.keys(IND);
   grafica("graf-sexo", {
     type: "bar",
     data: {
@@ -528,28 +657,19 @@ function renderResumen() {
       ],
     },
     options: {
-      indexAxis: "y",
-      layout: { padding: { right: 44 } },
+      indexAxis: "y", layout: { padding: { right: 44 } },
       scales: { x: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { callback: (v) => `${v}%` } }, y: { grid: { display: false } } },
-      plugins: {
-        tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.x.toFixed(2)}%` } },
-        etiquetasBarra: { formato: (v) => `${v.toFixed(1)}%` },
-      },
+      plugins: { tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.x.toFixed(2)}%` } }, etiquetasBarra: { formato: (v) => `${v.toFixed(1)}%` } },
     },
   });
-  const ts = $("#tabla-sexo");
-  ts.replaceChildren(
+  $("#tabla-sexo").replaceChildren(
     el("thead", {}, el("tr", {}, ...["Indicador", "Total", "Hombres", "Mujeres", "Brecha M−H"].map((h) => el("th", { text: h })))),
-    el("tbody", {}, ...claves.map((k) => el("tr", {},
-      el("td", { text: IND[k].corto }), el("td", { text: J[k].toFixed(2) }), el("td", { text: H[k].toFixed(2) }),
-      el("td", { text: M[k].toFixed(2) }), el("td", { text: signo(M[k] - H[k]) }))))
-  );
+    el("tbody", {}, ...claves.map((k) => el("tr", {}, el("td", { text: IND[k].corto }), el("td", { text: J[k].toFixed(2) }), el("td", { text: H[k].toFixed(2) }), el("td", { text: M[k].toFixed(2) }), el("td", { text: signo(M[k] - H[k]) })))));
 }
 
 function renderSerie() {
   const k = S.indicador;
-  let serie = k === "td" ? D.serie_td : D.serie_indicadores.filter((r) => r[k] != null);
-  serie = serie.map((r) => ({ p: r.periodo, v: r[k] })).filter((r) => r.v != null);
+  let serie = (k === "td" ? D.serie_td : D.serie_indicadores.filter((r) => r[k] != null)).map((r) => ({ p: r.periodo, v: r[k] })).filter((r) => r.v != null);
   const anios = [...new Set(serie.map((r) => +r.p.slice(0, 4)))];
   const largo = anios.length > 6;
   $("#seg-rango").hidden = !largo;
@@ -558,17 +678,14 @@ function renderSerie() {
     if (S.rango) { const desde = anios[anios.length - 1] - S.rango + 1; serie = serie.filter((r) => +r.p.slice(0, 4) >= desde); }
   }
   $("#titulo-serie").textContent = `${IND[k].nombre} — Jalisco`;
-  $("#sub-serie").textContent = `${IND[k].unidad} · ${etiqueta(serie[0].p)} a ${etiqueta(serie[serie.length - 1].p)}`;
-  const color = css("--serie-1");
-  const ultimo = serie.length - 1;
-  const seleccionado = serie.findIndex((r) => r.p === S.periodo);
+  $("#sub-serie").textContent = `${IND[k].unidad} · ${etiqueta(serie[0].p)} a ${etiqueta(serie.at(-1).p)}`;
+  const color = css("--serie-1"), ultimo = serie.length - 1, seleccionado = serie.findIndex((r) => r.p === S.periodo);
   grafica("graf-serie", {
     type: "line",
     data: {
       labels: serie.map((r) => r.p),
       datasets: [{
-        data: serie.map((r) => r.v), borderColor: color, borderWidth: 2, cubicInterpolationMode: "monotone", fill: true,
-        backgroundColor: color + "1a",
+        data: serie.map((r) => r.v), borderColor: color, borderWidth: 2, cubicInterpolationMode: "monotone", fill: true, backgroundColor: color + "1a",
         pointRadius: serie.map((_, i) => (i === ultimo || i === seleccionado ? 5 : serie.length > 30 ? 0 : 3)),
         pointBackgroundColor: color, pointBorderColor: css("--surface"), pointBorderWidth: 2, pointHoverRadius: 6,
       }],
@@ -576,7 +693,7 @@ function renderSerie() {
     options: {
       interaction: { mode: "index", intersect: false },
       scales: {
-        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10, callback(v) { const p = this.getLabelForValue(v); return p.endsWith("_T1") || serie.length < 16 ? (serie.length < 16 ? etiqueta(p).replace(" Trim ", "T ") : p.slice(0, 4)) : ""; } } },
+        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10, callback(v) { const p = this.getLabelForValue(v); return serie.length < 16 ? etiqueta(p).replace(" Trim ", "T ") : p.endsWith("_T1") ? p.slice(0, 4) : ""; } } },
         y: { grid: { color: css("--grid") }, ticks: { callback: (v) => `${v}%` } },
       },
       plugins: { tooltip: { callbacks: { title: (c) => etiqueta(c[0].label), label: (c) => ` ${c.parsed.y.toFixed(2)}%` } } },
@@ -585,7 +702,7 @@ function renderSerie() {
 }
 
 // ─── Población ocupada ─────────────────────────────────────────────────────
-function baseComparacion() {
+function opcionesComparacion() {
   const p = S.periodo;
   const ops = [
     { valor: "anual", periodo: anioAnterior(p), texto: `vs año anterior (${etiqueta(anioAnterior(p))})` },
@@ -597,56 +714,42 @@ function baseComparacion() {
 }
 
 function renderOcupacion() {
-  const p = S.periodo, act = D.periodos[p].ocupacion;
-  const ops = baseComparacion();
+  const p = S.periodo, act = D.periodos[p].ocupacion, ops = opcionesComparacion();
   if (!ops.find((o) => o.valor === S.comparacion && !o.deshabilitado)) S.comparacion = (ops.find((o) => !o.deshabilitado) || ops[0]).valor;
   segmentado($("#seg-comparacion"), ops, S.comparacion, (v) => { S.comparacion = v; renderOcupacion(); });
   segmentado($("#seg-unidad"), [{ valor: "personas", texto: "Personas" }, { valor: "pct", texto: "%" }], S.unidad, (v) => { S.unidad = v; renderOcupacion(); });
 
-  const op = ops.find((o) => o.valor === S.comparacion);
-  const base = op.deshabilitado ? null : D.periodos[op.periodo].ocupacion;
+  const op = ops.find((o) => o.valor === S.comparacion), base = op.deshabilitado ? null : D.periodos[op.periodo].ocupacion;
   const cambio = (a, b) => (b == null ? null : { n: a - b, p: b ? (a / b - 1) * 100 : null });
 
-  // Tarjetas
-  const tarjetas = [["Total", "total"], ["Formal", "formal"], ["Informal", "informal"], ["Hombres", "hombres"], ["Mujeres", "mujeres"]];
-  $("#kpis-ocupacion").replaceChildren(...tarjetas.map(([lbl, k]) => {
+  $("#kpis-ocupacion").replaceChildren(...[["Población ocupada", "total"], ["Formal", "formal"], ["Informal", "informal"], ["Hombres", "hombres"], ["Mujeres", "mujeres"]].map(([lbl, k]) => {
     const c = base && cambio(act[k], base[k]);
     return el("div", { class: "card kpi chica" },
-      el("p", { class: "lbl", text: lbl === "Total" ? "Población ocupada" : lbl }),
+      el("p", { class: "lbl", text: lbl }),
       el("div", { class: "val", text: compacto(act[k]) }),
       c ? el("div", { class: `delta ${k === "informal" ? "neutro" : clase(c.n, true)}` },
         S.unidad === "pct" ? `${signo(c.p, 1)}%` : signoN(c.n), " ", el("span", { text: S.unidad === "pct" ? `(${signoN(c.n)})` : `(${signo(c.p, 1)}%)` }))
         : el("div", { class: "delta neutro", text: "Sin dato para comparar" }),
-      k !== "total" ? el("div", { class: "extra", text: `${(act[k] / act.total * 100).toFixed(1)}% del total` }) : el("div", { class: "extra", text: `${nf0.format(act.total)} personas` }),
-    );
+      el("div", { class: "extra", text: k === "total" ? `${nf0.format(act.total)} personas` : `${(act[k] / act.total * 100).toFixed(1)}% del total` }));
   }));
 
-  // Sectores
   const sectores = Object.entries(D.sectores).map(([k, nombre]) => {
     const a = act.sectores[k], b = base?.sectores[k];
     return { nombre, a, c: cambio(a, b), poco: a / act.total < 0.01 };
   });
   const noEsp = { nombre: "No especificado", a: act.sector_no_especificado, c: cambio(act.sector_no_especificado, base?.sector_no_especificado), poco: true };
   const pocos = sectores.filter((s) => s.poco).map((s) => s.nombre);
-  $("#sub-sectores").textContent = base ? `${etiqueta(p)} ${op.texto.replace("vs", "vs")} · ${S.unidad === "pct" ? "cambio %" : "cambio en personas"}` : "Sin dato para comparar";
+  $("#sub-sectores").textContent = base ? `${etiqueta(p)} ${op.texto} · ${S.unidad === "pct" ? "cambio en %" : "cambio en personas"}` : "Sin dato para comparar";
 
   const graf = sectores.filter((s) => s.c && !s.poco).sort((x, y) => (S.unidad === "pct" ? y.c.p - x.c.p : y.c.n - x.c.n));
   const valor = (s) => (S.unidad === "pct" ? s.c.p : s.c.n);
   grafica("graf-sectores", {
     type: "bar",
-    data: {
-      labels: graf.map((s) => s.nombre),
-      datasets: [{
-        data: graf.map(valor),
-        backgroundColor: graf.map((s) => (valor(s) >= 0 ? css("--sube") : css("--baja"))),
-        borderRadius: 4, borderSkipped: "start", maxBarThickness: 22,
-      }],
-    },
+    data: { labels: graf.map((s) => s.nombre), datasets: [{ data: graf.map(valor), backgroundColor: graf.map((s) => (valor(s) >= 0 ? css("--sube") : css("--baja"))), borderRadius: 4, borderSkipped: "start", maxBarThickness: 22 }] },
     options: {
-      indexAxis: "y",
-      layout: { padding: { left: 0, right: 70 } },
+      indexAxis: "y", layout: { padding: { right: 70 } },
       scales: {
-        x: { grid: { color: css("--grid") }, ticks: { callback: (v) => (S.unidad === "pct" ? `${v}%` : compacto(Math.abs(v)).replace(/^/, v < 0 ? "−" : "")) } },
+        x: { grid: { color: css("--grid") }, ticks: { callback: (v) => (S.unidad === "pct" ? `${v}%` : (v < 0 ? "−" : "") + compacto(Math.abs(v))) } },
         y: { grid: { display: false } },
       },
       plugins: {
@@ -659,7 +762,6 @@ function renderOcupacion() {
     },
   });
 
-  // Tabla
   const filas = [
     { nombre: "Población ocupada total", a: act.total, c: cambio(act.total, base?.total), tipo: "grupo" },
     { nombre: "Formalidad", tipo: "titulo" },
@@ -670,7 +772,7 @@ function renderOcupacion() {
     { nombre: "Mujeres", a: act.mujeres, c: cambio(act.mujeres, base?.mujeres), tipo: "sangria" },
     { nombre: "Actividad económica", tipo: "titulo" },
   ];
-  let ordenados = [...sectores];
+  const ordenados = [...sectores];
   if (S.orden) {
     const { col, dir } = S.orden;
     const v = (s) => (col === 1 ? s.a : col === 2 ? s.c?.n ?? -Infinity : col === 3 ? s.c?.p ?? -Infinity : s.nombre);
@@ -678,26 +780,19 @@ function renderOcupacion() {
   }
   for (const s of [...ordenados, noEsp]) filas.push({ ...s, tipo: "sangria" });
 
-  const encabezados = ["Concepto", etiqueta(p), "Cambio (personas)", "Cambio (%)"];
-  const tabla = $("#tabla-ocupacion");
-  const thead = el("thead", {}, el("tr", {}, ...encabezados.map((h, i) => {
-    const flecha = S.orden?.col === i ? (S.orden.dir > 0 ? " ▲" : " ▼") : "";
-    const th = el("th", { class: "ordenable", scope: "col", tabindex: "0", text: h + flecha });
+  const thead = el("thead", {}, el("tr", {}, ...["Concepto", etiqueta(p), "Cambio (personas)", "Cambio (%)"].map((h, i) => {
+    const th = el("th", { class: "ordenable", scope: "col", tabindex: "0", text: h + (S.orden?.col === i ? (S.orden.dir > 0 ? " ▲" : " ▼") : "") });
     const ordenar = () => { S.orden = S.orden?.col === i ? { col: i, dir: -S.orden.dir } : { col: i, dir: i === 0 ? 1 : -1 }; renderOcupacion(); };
     th.addEventListener("click", ordenar);
     th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ordenar(); } });
     return th;
   })));
-  const tbody = el("tbody", {}, ...filas.map((f) => {
+  $("#tabla-ocupacion").replaceChildren(thead, el("tbody", {}, ...filas.map((f) => {
     if (f.tipo === "titulo") return el("tr", { class: "grupo" }, el("td", { text: f.nombre, colspan: "4" }));
-    const tr = el("tr", { class: `${f.tipo === "grupo" ? "grupo" : "sangria"}${f.poco ? " poco" : ""}` },
-      el("td", { text: f.nombre + (f.poco ? " *" : "") }),
-      el("td", { text: nf0.format(f.a) }),
-      el("td", { text: f.c ? signoN(f.c.n) : "—" }),
-      el("td", { text: f.c && f.c.p != null ? `${signo(f.c.p, 1)}%` : "—" }));
-    return tr;
-  }));
-  tabla.replaceChildren(thead, tbody);
+    return el("tr", { class: `${f.tipo === "grupo" ? "grupo" : "sangria"}${f.poco ? " poco" : ""}` },
+      el("td", { text: f.nombre + (f.poco ? " *" : "") }), el("td", { text: nf0.format(f.a) }),
+      el("td", { text: f.c ? signoN(f.c.n) : "—" }), el("td", { text: f.c && f.c.p != null ? `${signo(f.c.p, 1)}%` : "—" }));
+  })));
   $("#nota-grafica").textContent = pocos.length ? `No se grafican por tener pocos casos en la muestra: ${pocos.join(", ")} (ver tabla).` : "";
   $("#nota-ocupacion").textContent = `* Pocos casos en la muestra (${[...pocos, "No especificado"].join(", ")}): variaciones poco confiables.`;
 }
@@ -705,24 +800,15 @@ function renderOcupacion() {
 // ─── Comparativo estatal ───────────────────────────────────────────────────
 function renderEntidades() {
   segmentado($("#seg-ent"), Object.entries(IND).map(([k, v]) => ({ valor: k, texto: v.corto })), S.indEnt, (v) => { S.indEnt = v; renderEntidades(); });
-  const k = S.indEnt, act = D.periodos[S.periodo];
-  const ents = [...act.entidades].sort((a, b) => a[k] - b[k]);
+  const k = S.indEnt, act = D.periodos[S.periodo], ents = [...act.entidades].sort((a, b) => a[k] - b[k]);
   const lugar = ents.findIndex((e) => e.nombre === "Jalisco") + 1;
   $("#titulo-entidades").textContent = `${IND[k].nombre} por entidad`;
   $("#sub-entidades").textContent = `${etiqueta(S.periodo)} · ${IND[k].unidad} · Jalisco: lugar ${lugar} de ${ents.length} (de menor a mayor)`;
   grafica("graf-entidades", {
     type: "bar",
-    data: {
-      labels: ents.map((e) => e.nombre),
-      datasets: [{
-        data: ents.map((e) => e[k]),
-        backgroundColor: ents.map((e) => (e.nombre === "Jalisco" ? css("--serie-1") : css("--resto"))),
-        borderRadius: 4, borderSkipped: "start", maxBarThickness: 16, categoryPercentage: .85,
-      }],
-    },
+    data: { labels: ents.map((e) => e.nombre), datasets: [{ data: ents.map((e) => e[k]), backgroundColor: ents.map((e) => (e.nombre === "Jalisco" ? css("--serie-1") : css("--resto"))), borderRadius: 4, borderSkipped: "start", maxBarThickness: 16, categoryPercentage: .85 }] },
     options: {
-      indexAxis: "y",
-      layout: { padding: { right: 44 } },
+      indexAxis: "y", layout: { padding: { right: 44 } },
       scales: {
         x: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { callback: (v) => `${v}%` } },
         y: { grid: { display: false }, ticks: { autoSkip: false, font: (c) => ({ weight: ents[c.index]?.nombre === "Jalisco" ? "700" : "400" }), color: (c) => (ents[c.index]?.nombre === "Jalisco" ? css("--ink") : css("--ink-2")) } },
@@ -737,6 +823,12 @@ function renderEntidades() {
 }
 
 // ─── Fichas y generación ───────────────────────────────────────────────────
+function mostrar(caja, tipo, texto, enlace, textoEnlace = "Ver detalle") {
+  caja.className = `estado visible ${tipo}`;
+  caja.replaceChildren(texto);
+  if (enlace) caja.append(" ", el("a", { href: enlace, target: "_blank", rel: "noopener", text: textoEnlace }));
+}
+
 function iniciarFichas() {
   const lista = $("#lista-fichas");
   if (!D.fichas?.length) lista.append(el("p", { class: "sub", text: "Todavía no hay fichas generadas." }));
@@ -747,14 +839,13 @@ function iniciarFichas() {
       const clave = el("input", { type: "password", placeholder: "Clave", "aria-label": "Clave para borrar" });
       const btn = el("button", { type: "button", class: "btn peligro", text: "Confirmar borrado" });
       const msg = el("div", { class: "estado", role: "status" });
-      btn.addEventListener("click", () => enviarAlRobot("borrar", { periodo: f.periodo, clave: clave.value }, btn, msg,
-        `Ficha de ${etiqueta(f.periodo)} borrada. La página se actualiza en 1–2 minutos.`));
+      btn.addEventListener("click", () => enviarAlRobot("borrar", { periodo: f.periodo, clave: clave.value }, btn, msg, `Ficha de ${etiqueta(f.periodo)} borrada. La página se actualiza en 1–2 minutos.`));
       mas.append(el("div", { class: "borrar-form" }, clave, btn), msg);
     } else {
-      mas.append(el("p", { class: "nota", text: "El borrado desde la página no está configurado." }));
+      mas.append(el("p", { class: "nota", text: "El borrado desde la página se activa al conectar el servicio del robot (SITIO.md)." }));
     }
     lista.append(el("div", { class: "ficha" },
-      el("div", {}, el("h3", { text: `${etiqueta(f.periodo).replace("Trim", "Trimestre")}` }), el("p", { text: fecha ? `Generada el ${fecha} (hora CDMX)` : "Fecha de generación no registrada" })),
+      el("div", {}, el("h3", { text: etiqueta(f.periodo).replace("Trim", "Trimestre") }), el("p", { text: fecha ? `Generada el ${fecha} (hora CDMX)` : "Fecha de generación no registrada" })),
       el("div", { class: "acciones" },
         f.docx ? el("a", { class: "btn primario", href: f.docx, download: "", text: "Descargar Word" }) : null,
         el("a", { class: "btn", href: f.txt, target: "_blank", rel: "noopener", text: "Ver texto" }),
@@ -762,38 +853,24 @@ function iniciarFichas() {
   }
 
   // Trimestres que se pueden pedir: los ya publicados según el calendario de INEGI
-  const ahora = new Date();
-  const publicados = (D.calendario || []).filter((c) => new Date(c.fecha) <= ahora).map((c) => c.periodo).reverse().slice(0, 8);
+  const publicados = (D.calendario || []).filter((c) => new Date(c.fecha).getTime() <= Date.now()).map((c) => c.periodo).reverse().slice(0, 8);
   const sel = $("#g-periodo");
   sel.append(el("option", { value: "", text: "El más reciente publicado" }));
   for (const per of publicados) sel.append(el("option", { value: per, text: etiqueta(per) + (D.fichas?.some((f) => f.periodo === per) ? " (ya generada)" : "") }));
 
-  if (!WORKER_URL) {
-    $("#generar-desactivado").hidden = false;
-    $("#form-generar").querySelectorAll("input, select, button").forEach((x) => (x.disabled = true));
-    return;
-  }
+  $("#g-sinmail").addEventListener("change", (e) => { $("#g-correo").disabled = e.target.checked; });
   $("#form-generar").addEventListener("submit", (e) => {
     e.preventDefault();
-    const correo = $("#g-correo").value.trim();
-    const msg = $("#g-estado");
-    if (correo && !correo.split(",").every((c) => /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(c.trim()))) return mostrar(msg, "error", "Revisa el correo: parece tener un error.");
+    const msg = $("#g-estado"), correo = $("#g-correo").value.trim(), sinMail = $("#g-sinmail").checked, periodo = sel.value;
+    if (!sinMail && correo && !correo.split(",").every((c) => /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(c.trim()))) return mostrar(msg, "error", "Revisa el correo: parece tener un error.");
+    if (!WORKER_URL) return mostrar(msg, "aviso", "Esta página todavía no está conectada al robot (falta el paso 3 de SITIO.md). Mientras tanto puedes generar la ficha desde GitHub: Run workflow.", `https://github.com/${REPO}/actions/workflows/robot.yml`, "Abrir GitHub Actions");
     if (!$("#g-clave").value) return mostrar(msg, "error", "Escribe la clave.");
-    const periodo = sel.value;
     if (periodo && D.fichas?.some((f) => f.periodo === periodo) && !$("#g-forzar").checked)
       return mostrar(msg, "error", `La ficha de ${etiqueta(periodo)} ya existe. Marca “Volver a generarla si ya existe” para rehacerla.`);
-    const destino = correo ? `a ${correo} y a la lista del proyecto` : "a la lista del proyecto";
-    enviarAlRobot("generar", { periodo, correo, forzar: $("#g-forzar").checked, clave: $("#g-clave").value }, $("#g-boton"), msg,
-      `Listo: la ficha se generó y se envió ${destino}. Aparece en esta página en 1–2 minutos (recarga).`);
+    const destino = sinMail ? "sin enviar correo" : correo ? `y se envió a ${correo} y a la lista del proyecto` : "y se envió a la lista del proyecto";
+    enviarAlRobot("generar", { periodo, correo: sinMail ? "" : correo, sinMail, forzar: $("#g-forzar").checked, clave: $("#g-clave").value }, $("#g-boton"), msg,
+      `Listo: la ficha se generó ${destino}. Aparece en esta página en 1–2 minutos (recarga).`);
   });
-  $("#card-ejecuciones").hidden = false;
-  cargarEjecuciones();
-}
-
-function mostrar(caja, tipo, texto, enlace) {
-  caja.className = `estado visible ${tipo}`;
-  caja.replaceChildren(texto);
-  if (enlace) caja.append(" ", el("a", { href: enlace, target: "_blank", rel: "noopener", text: "Ver detalle" }));
 }
 
 async function enviarAlRobot(accion, cuerpo, boton, caja, mensajeOk) {
@@ -811,7 +888,7 @@ async function enviarAlRobot(accion, cuerpo, boton, caja, mensajeOk) {
   }
 }
 
-async function ejecuciones() {
+async function ejecucionesWorker() {
   const r = await fetch(`${WORKER_URL}/estado`, { cache: "no-store" });
   if (!r.ok) throw new Error("No se pudo consultar el estado del robot.");
   return (await r.json()).ejecuciones || [];
@@ -821,28 +898,68 @@ async function seguirEjecucion(desde, caja, mensajeOk) {
   const inicio = new Date(desde || Date.now()).getTime() - 15000;
   for (let i = 0; i < 80; i++) {                       // hasta ~8 minutos
     await new Promise((res) => setTimeout(res, 6000));
-    const run = (await ejecuciones()).find((x) => x.evento === "workflow_dispatch" && new Date(x.creada).getTime() >= inicio);
+    const run = (await ejecucionesWorker()).find((x) => x.evento === "workflow_dispatch" && new Date(x.creada).getTime() >= inicio);
     if (!run) { mostrar(caja, "info", "Esperando a que el robot arranque…"); continue; }
     if (run.estado !== "completed") { mostrar(caja, "info", `El robot está trabajando (${i * 6 + 6} s)…`, run.url); continue; }
-    cargarEjecuciones();
+    renderRobot();
     if (run.resultado === "success") return mostrar(caja, "ok", mensajeOk, run.url);
     return mostrar(caja, "error", "El robot terminó con error.", run.url);
   }
-  mostrar(caja, "info", "El robot sigue trabajando. Revisa el avance más tarde en “Actividad del robot”.");
+  mostrar(caja, "info", "El robot sigue trabajando. Revisa el avance más tarde en “Seguimiento del robot”.");
 }
 
-async function cargarEjecuciones() {
-  const ul = $("#ejecuciones");
-  try {
-    const runs = await ejecuciones();
-    const nombre = { schedule: "Revisión diaria", workflow_dispatch: "Solicitud manual" };
-    const resultado = (r) => r.estado !== "completed" ? "⏳ En proceso" : r.resultado === "success" ? "✓ Correcto" : "✕ Error";
-    ul.replaceChildren(...runs.slice(0, 6).map((r) => el("li", {},
-      el("span", {}, el("a", { href: r.url, target: "_blank", rel: "noopener", text: nombre[r.evento] || r.evento }), " · ", fechaCDMX(r.creada)),
-      el("span", { class: r.estado !== "completed" ? "neutro" : r.resultado === "success" ? "bien" : "mal", text: resultado(r) }))));
-  } catch {
-    ul.replaceChildren(el("li", { text: "No se pudo consultar la actividad del robot." }));
+// ─── Seguimiento del robot ─────────────────────────────────────────────────
+const TIPOS = {
+  generada:        ["Ficha generada", "ok"],
+  borrada:         ["Ficha borrada", "info"],
+  ya_procesada:    ["Ya procesado", "info"],
+  sin_publicacion: ["Sin publicación hoy", "neutral"],
+  ok:              ["Correcta", "neutral"],
+  en_proceso:      ["En proceso", "warn"],
+  error:           ["Error", "err"],
+};
+const EVENTOS = { schedule: "Revisión diaria", workflow_dispatch: "Solicitud manual" };
+
+async function historialCompleto() {
+  let runs = [];
+  try {                                                // API pública de GitHub (el repo debe ser público)
+    const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/robot.yml/runs?per_page=30`, { headers: { Accept: "application/vnd.github+json" } });
+    if (r.ok) runs = (await r.json()).workflow_runs || [];
+  } catch { /* sin conexión o límite de GitHub: se usa solo el historial guardado */ }
+  const guardado = new Map((D.historial || []).filter((h) => h.id).map((h) => [h.id, h]));
+  const filas = [], vistos = new Set();
+  for (const r of runs) {
+    vistos.add(r.id);
+    const h = guardado.get(r.id), enCurso = r.status !== "completed", bien = r.conclusion === "success";
+    filas.push({
+      fecha: r.created_at, evento: r.event, url: r.html_url,
+      tipo: h ? h.tipo : enCurso ? "en_proceso" : bien ? "ok" : "error",
+      detalle: h ? h.detalle : enCurso ? "En ejecución…" : bien ? "Revisión terminada sin novedades." : "La ejecución terminó con error o GitHub no pudo iniciarla.",
+    });
   }
+  for (const h of D.historial || []) if (!vistos.has(h.id)) filas.push({ fecha: h.fecha, evento: h.evento, url: h.url, tipo: h.tipo, detalle: h.detalle });
+  return filas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 40);
+}
+
+async function renderRobot() {
+  const tabla = $("#tabla-historial");
+  const filas = await historialCompleto();
+  if (!filas.length) {
+    tabla.replaceChildren(el("tbody", {}, el("tr", {}, el("td", { class: "txt", text: "Todavía no hay revisiones registradas. Aparecerán aquí cuando el robot corra." }))));
+    return;
+  }
+  const u = filas[0];
+  $("#rb-sub-hist").textContent = `Última revisión: ${fechaCDMX(u.fecha)} · ${TIPOS[u.tipo]?.[0] || u.tipo}. Hora del centro de México.`;
+  tabla.replaceChildren(
+    el("thead", {}, el("tr", {}, ...["Fecha", "Disparador", "Resultado", "Detalle"].map((h) => el("th", { class: "txt", text: h })))),
+    el("tbody", {}, ...filas.map((f) => {
+      const [txt, tono] = TIPOS[f.tipo] || [f.tipo, "neutral"];
+      return el("tr", {},
+        el("td", { class: "txt" }, f.url ? el("a", { href: f.url, target: "_blank", rel: "noopener", text: fechaCDMX(f.fecha) || "—" }) : (fechaCDMX(f.fecha) || "—")),
+        el("td", { class: "txt", text: EVENTOS[f.evento] || f.evento || "—" }),
+        el("td", { class: "txt" }, el("span", { class: `badge ${tono}`, text: txt })),
+        el("td", { class: "txt detalle", text: f.detalle || "" }));
+    })));
 }
 
 iniciar();

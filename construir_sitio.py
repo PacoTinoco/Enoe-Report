@@ -98,9 +98,10 @@ def construir() -> Path:
         "periodos": periodos,
         "sectores": {str(k): v for k, v in SECTORES.items()},
         "serie_td": leer_csv(BASE / "serie_bie_jalisco.csv", ["td"]),
-        "serie_indicadores": leer_csv(BASE / "serie_indicadores_jalisco.csv", INDICADORES),
+        "serie_indicadores": leer_csv(BASE / "serie_indicadores_jalisco.csv", INDICADORES + ("pob_ocupada",)),
         "calendario": leer_json(BASE / "calendario_enoe.json", []),
         "fichas": sincronizar_fichas(),
+        "historial": leer_json(BASE / "historial_robot.json", []),
     }
     salida = DOCS / "data.json"
     texto = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
