@@ -6,13 +6,15 @@ nacional, posición entre las 32 entidades, comparativo regional y **desagregaci
 
 - **Robot**: el día que INEGI publica (06:00 CDMX) descarga los microdatos, genera la ficha
   (`.txt` y `.docx`), la manda por correo y la guarda en `fichas/`.
-- **Dashboard** (Streamlit): series históricas, indicadores por sexo, descarga de fichas y botón
-  para generarlas a mano.
+- **Dashboard web** (GitHub Pages, siempre activo): indicadores clave, series, población ocupada,
+  comparativo estatal, descarga de fichas y botón para generarlas con envío a un correo.
+  Puesta en marcha: [SITIO.md](SITIO.md). (El dashboard anterior en Streamlit, `app.py`, sigue funcionando.)
 
 | Documento | Para quién |
 |---|---|
 | [GUIA.md](GUIA.md) | Usuarios: qué hace, cómo generar la ficha a mano, metodología |
 | [ROBOT.md](ROBOT.md) | Administrador: GitHub Actions, correo, despliegue del dashboard |
+| [SITIO.md](SITIO.md) | Administrador: dashboard web (GitHub Pages + Cloudflare Worker) |
 
 ```bash
 python -m pip install -r requirements.txt

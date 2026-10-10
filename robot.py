@@ -60,11 +60,18 @@ def main():
     ap.add_argument("--sin-email", action="store_true", help="No enviar correo")
     ap.add_argument("--hoy", help="AAAA-MM-DD — simular la fecha (para pruebas)")
     ap.add_argument("--borrar", help="AAAA_T# — borrar la ficha de este trimestre y terminar")
+    ap.add_argument("--correo", help="Correo(s) adicional(es) para esta ficha, separados por coma")
     args = ap.parse_args()
 
     for p in (args.periodo, args.borrar):
         if p and not re.fullmatch(r"\d{4}_T[1-4]", p):
             sys.exit(f"Período inválido: {p!r} (formato AAAA_T#)")
+    correos = [c.strip() for c in (args.correo or "").split(",") if c.strip()]
+    for c in correos:
+        if not re.fullmatch(r"[^@\s,]+@[^@\s,]+\.[^@\s,]+", c):
+            sys.exit(f"Correo inválido: {c!r}")
+    if len(correos) > 5:
+        sys.exit("Máximo 5 correos adicionales.")
 
     if args.borrar:
         borrados = borrar_ficha(args.borrar)
@@ -103,7 +110,7 @@ def main():
 
     # 3. ¿Ya está publicado?
     if publicado(periodo):
-        ejecutar(periodo, config, sin_email=args.sin_email)
+        ejecutar(periodo, config, sin_email=args.sin_email, correos_extra=correos)
         resumen(f"✅ Ficha {periodo} generada" + ("" if args.sin_email else " y enviada") + ".")
         return
 
@@ -116,7 +123,7 @@ def main():
         while calendario.ahora_cdmx().hour < HORA_LIMITE:
             time.sleep(ESPERA_SEG)
             if publicado(periodo):
-                ejecutar(periodo, config, sin_email=args.sin_email)
+                ejecutar(periodo, config, sin_email=args.sin_email, correos_extra=correos)
                 resumen(f"✅ Ficha {periodo} generada" + ("" if args.sin_email else " y enviada") + ".")
                 return
         sys.exit(f"❌ Hoy era día de publicación de {periodo} y a las {HORA_LIMITE}:00 "

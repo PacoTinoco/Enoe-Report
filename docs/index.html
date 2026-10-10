@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mercado laboral · Jalisco</title>
+<meta name="description" content="Indicadores laborales de Jalisco a partir de la ENOE (INEGI): desocupación, población ocupada, informalidad y fichas trimestrales.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23173a63'/><rect x='7' y='17' width='4' height='8' rx='1' fill='white'/><rect x='14' y='11' width='4' height='14' rx='1' fill='white'/><rect x='21' y='6' width='4' height='19' rx='1' fill='white'/></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #f8f9fa;
+    --ink: #0f1720;
+    --ink-2: #4b5563;
+    --muted: #8a8f98;
+    --line: #e5e7eb;
+    --grid: #eceef1;
+    --brand: #173a63;
+    --brand-ink: #ffffff;
+    --accent: #2a78d6;
+    --accent-soft: #e8f1fc;
+    --serie-1: #2a78d6;       /* Jalisco / Hombres */
+    --serie-2: #eb6834;       /* Mujeres */
+    --resto: #c9ced6;         /* otras entidades */
+    --sube: #2a78d6;          /* diverging: aumento */
+    --baja: #e34948;          /* diverging: disminución */
+    --bien: #006300;
+    --mal: #b42318;
+    --aviso-bg: #fff8e6;
+    --aviso-ink: #7a5300;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0f1115; --surface: #171a20; --surface-2: #1d2128;
+      --ink: #eef0f3; --ink-2: #b9bec7; --muted: #8a8f98; --line: #2a2f37; --grid: #252a31;
+      --brand: #10233d; --accent: #3987e5; --accent-soft: #1b2a3f;
+      --serie-1: #3987e5; --serie-2: #d95926; --resto: #4a515c;
+      --sube: #3987e5; --baja: #e66767; --bien: #3ccf6e; --mal: #ff8a80;
+      --aviso-bg: #2b2414; --aviso-ink: #f2c66d;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+  /* Encabezado */
+  header { background: var(--brand); color: var(--brand-ink); }
+  header .wrap { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding-top: 22px; padding-bottom: 18px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -.01em; }
+  header p { margin: 2px 0 0; font-size: 13px; opacity: .78; }
+  .selector-periodo { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .selector-periodo select {
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); background: #fff;
+    border: 0; border-radius: 8px; padding: 7px 30px 7px 12px; cursor: pointer;
+  }
+  .franja { background: var(--brand); border-top: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.85); font-size: 13px; }
+  .franja .wrap { padding-top: 8px; padding-bottom: 8px; display: flex; gap: 18px; flex-wrap: wrap; }
+
+  /* Pestañas */
+  nav.tabs { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+  nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; }
+  nav.tabs button {
+    font: inherit; font-weight: 550; color: var(--ink-2); background: none; border: 0;
+    padding: 14px 14px 12px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+  }
+  nav.tabs button:hover { color: var(--ink); }
+  nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  main.wrap { padding-top: 24px; padding-bottom: 48px; }
+  section.panel { display: none; }
+  section.panel.activo { display: block; }
+
+  .grid { display: grid; gap: 16px; align-items: start; }
+  .g2i { grid-template-columns: 1fr 1fr; }
+  .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .g2 { grid-template-columns: 3fr 2fr; }
+  @media (max-width: 960px) { .g4, .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g2, .g2i { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { .g4, .g5 { grid-template-columns: 1fr; } .wrap { padding: 0 16px; } }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; min-width: 0; }
+  .card h2 { margin: 0; font-size: 16px; font-weight: 650; }
+  .card .sub { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .espacio { height: 16px; }
+
+  /* Tarjetas de indicador */
+  .grid.g4 > .card, .grid.g5 > .card { align-self: stretch; }
+  .kpi .lbl { font-size: 13px; color: var(--ink-2); margin: 0; }
+  .kpi .val { font-size: 30px; font-weight: 650; letter-spacing: -.02em; margin: 4px 0 2px; }
+  .kpi.chica .val { font-size: 22px; }
+  .kpi .delta { font-size: 13px; font-weight: 600; }
+  .kpi .delta span { font-weight: 400; color: var(--muted); }
+  .kpi .extra { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .bien { color: var(--bien); } .mal { color: var(--mal); } .neutro { color: var(--ink-2); }
+
+  /* Controles segmentados */
+  .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+  .seg button { font: inherit; font-size: 13px; font-weight: 550; color: var(--ink-2); background: none; border: 0; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .seg button:disabled { opacity: .4; cursor: not-allowed; }
+  .controles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+
+  .lienzo { position: relative; height: 320px; }
+  .lienzo.alto { height: 720px; }
+  .leyenda { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* Tablas */
+  .tabla-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px 9px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .03em; background: var(--surface-2); }
+  th.ordenable { cursor: pointer; user-select: none; }
+  th.ordenable:hover { color: var(--ink); }
+  td { font-variant-numeric: tabular-nums; }
+  tr.grupo td { font-weight: 650; background: var(--surface-2); color: var(--ink); }
+  tr.sangria td:first-child { padding-left: 22px; }
+  tr.poco td { color: var(--muted); }
+  .nota { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+
+  /* Fichas */
+  .fichas { display: grid; gap: 12px; }
+  .ficha { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+  .ficha h3 { margin: 0; font-size: 15px; }
+  .ficha p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+  .ficha .acciones { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primario { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primario:hover { filter: brightness(1.06); }
+  .btn.peligro { color: var(--mal); }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  details.mas summary { font-size: 13px; color: var(--muted); cursor: pointer; list-style: none; padding: 4px 6px; border-radius: 6px; }
+  details.mas summary::-webkit-details-marker { display: none; }
+  details.mas[open] summary { color: var(--ink-2); }
+  .borrar-form { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+  form.generar { display: grid; gap: 14px; }
+  form.generar label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+  form.generar .ayuda { font-weight: 400; color: var(--muted); font-size: 12px; }
+  input[type=text], input[type=email], input[type=password], select.campo {
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; width: 100%;
+  }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .check { display: flex !important; grid-template-columns: none; align-items: center; gap: 8px; font-weight: 500 !important; }
+  .estado { font-size: 14px; padding: 10px 12px; border-radius: 8px; display: none; }
+  .estado.visible { display: block; }
+  .estado.info { background: var(--accent-soft); color: var(--ink); }
+  .estado.ok { background: #e7f6ec; color: #0b5a23; }
+  .estado.error { background: #fdecea; color: #8a1c13; }
+  .aviso { background: var(--aviso-bg); color: var(--aviso-ink); font-size: 13px; padding: 10px 12px; border-radius: 8px; }
+  ul.ejecuciones { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  ul.ejecuciones li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  ul.ejecuciones li:last-child { border-bottom: 0; }
+
+  footer { color: var(--muted); font-size: 12px; padding: 0 0 32px; }
+  .cargando { padding: 80px 0; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Mercado laboral · Jalisco</h1>
+      <p>Encuesta Nacional de Ocupación y Empleo (ENOE) · INEGI</p>
+    </div>
+    <label class="selector-periodo">Trimestre
+      <select id="periodo" aria-label="Trimestre"></select>
+    </label>
+  </div>
+  <div class="franja"><div class="wrap">
+    <span id="proxima"></span>
+    <span id="actualizado"></span>
+  </div></div>
+</header>
+
+<nav class="tabs" aria-label="Secciones">
+  <div class="wrap" role="tablist">
+    <button role="tab" data-tab="resumen" aria-selected="true">Resumen</button>
+    <button role="tab" data-tab="ocupacion" aria-selected="false">Población ocupada</button>
+    <button role="tab" data-tab="entidades" aria-selected="false">Comparativo estatal</button>
+    <button role="tab" data-tab="fichas" aria-selected="false">Fichas</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div id="cargando" class="cargando">Cargando datos…</div>
+
+  <!-- ── Resumen ─────────────────────────────────────────────── -->
+  <section class="panel activo" id="resumen" role="tabpanel">
+    <div class="grid g4" id="kpis"></div>
+    <div class="espacio"></div>
+    <div class="card">
+      <div class="card-head">
+        <div><h2 id="titulo-serie">Evolución</h2><p class="sub" id="sub-serie"></p></div>
+        <div class="controles" style="margin:0">
+          <div class="seg" id="seg-indicador"></div>
+          <div class="seg" id="seg-rango"></div>
+        </div>
+      </div>
+      <div class="lienzo"><canvas id="graf-serie" aria-label="Serie histórica"></canvas></div>
+    </div>
+    <div class="espacio"></div>
+    <div class="grid g2i">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Indicadores por sexo</h2><p class="sub" id="sub-sexo"></p></div>
+          <div class="leyenda"><span><i style="background:var(--serie-1)"></i>Hombres</span><span><i style="background:var(--serie-2)"></i>Mujeres</span></div>
+        </div>
+        <div class="lienzo" style="height:280px"><canvas id="graf-sexo" aria-label="Indicadores por sexo"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2>Detalle por sexo</h2><p class="sub">Tasas en %; brecha en puntos porcentuales</p></div></div>
+        <div class="tabla-wrap"><table id="tabla-sexo"></table></div>
+        <p class="nota">Las estimaciones por sexo a nivel estatal tienen mayor error de muestreo que el total.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Población ocupada ───────────────────────────────────── -->
+  <section class="panel" id="ocupacion" role="tabpanel">
+    <div class="controles">
+      <div class="seg" id="seg-comparacion" aria-label="Comparar contra"></div>
+      <div class="seg" id="seg-unidad" aria-label="Unidad"></div>
+    </div>
+    <div class="grid g5" id="kpis-ocupacion"></div>
+    <div class="espacio"></div>
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Cambio por actividad económica</h2><p class="sub" id="sub-sectores"></p></div>
+          <div class="leyenda"><span><i style="background:var(--sube)"></i>Aumento</span><span><i style="background:var(--baja)"></i>Disminución</span></div>
+        </div>
+        <div class="lienzo" style="height:380px"><canvas id="graf-sectores" aria-label="Cambio por actividad económica"></canvas></div>
+        <p class="nota" id="nota-grafica"></p>
+      </div>
+      <div class="espacio"></div>
+      <div class="card">
+        <div class="card-head"><div><h2>Tabla completa</h2><p class="sub">Clic en un encabezado para ordenar los sectores</p></div></div>
+        <div class="tabla-wrap"><table id="tabla-ocupacion"></table></div>
+        <p class="nota" id="nota-ocupacion"></p>
+      </div>
+  </section>
+
+  <!-- ── Comparativo estatal ─────────────────────────────────── -->
+  <section class="panel" id="entidades" role="tabpanel">
+    <div class="card">
+      <div class="card-head">
+        <div><h2 id="titulo-entidades">Comparativo estatal</h2><p class="sub" id="sub-entidades"></p></div>
+        <div class="seg" id="seg-ent"></div>
+      </div>
+      <div class="lienzo alto"><canvas id="graf-entidades" aria-label="Comparativo estatal"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ── Fichas ──────────────────────────────────────────────── -->
+  <section class="panel" id="fichas" role="tabpanel">
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-head"><div><h2>Fichas trimestrales</h2><p class="sub">Descarga la ficha en Word o en texto</p></div></div>
+        <div class="fichas" id="lista-fichas"></div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-head"><div><h2>Generar una ficha</h2><p class="sub">El robot descarga los microdatos de INEGI, arma la ficha y la envía por correo (2–4 min).</p></div></div>
+          <div id="generar-desactivado" class="aviso" hidden>La generación desde la página todavía no está configurada. Mientras tanto, las fichas se generan solas cuando INEGI publica.</div>
+          <form class="generar" id="form-generar" novalidate>
+            <label>Trimestre
+              <select class="campo" id="g-periodo"></select>
+            </label>
+            <label>Correo para recibir la ficha <span class="ayuda">Opcional. También se envía a la lista del proyecto. Varios correos: sepáralos con coma.</span>
+              <input type="email" id="g-correo" placeholder="nombre@ejemplo.com" autocomplete="email" multiple>
+            </label>
+            <label class="check"><input type="checkbox" id="g-forzar"> Volver a generarla si ya existe</label>
+            <label>Clave
+              <input type="password" id="g-clave" autocomplete="current-password">
+            </label>
+            <button class="btn primario" id="g-boton" type="submit">Generar ficha</button>
+            <div class="estado" id="g-estado" role="status" aria-live="polite"></div>
+          </form>
+        </div>
+        <div class="espacio"></div>
+        <div class="card" id="card-ejecuciones" hidden>
+          <div class="card-head"><div><h2>Actividad del robot</h2><p class="sub">Últimas ejecuciones (hora del centro de México)</p></div></div>
+          <ul class="ejecuciones" id="ejecuciones"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Fuente: INEGI, Encuesta Nacional de Ocupación y Empleo (ENOE), microdatos trimestrales. Cifras de Jalisco estimadas con el factor de expansión trimestral.
+  Proyecto de Aplicación Profesional — ITESO.
+</footer>
+
+<script>
+// ─── Configuración ─────────────────────────────────────────────────────────
+// URL del Cloudflare Worker que dispara el robot (ver SITIO.md). Vacía = generación desactivada.
+const WORKER_URL = "";
+
+// ─── Utilidades ────────────────────────────────────────────────────────────
+const $ = (s) => document.querySelector(s);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const nf0 = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });
+const ORD = { 1: "1er", 2: "2°", 3: "3er", 4: "4°" };
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const IND = {
+  td:           { nombre: "Tasa de desocupación",        corto: "Desocupación",  unidad: "% de la PEA",                         subeEsBueno: false },
+  tpea:         { nombre: "Tasa de participación económica", corto: "Participación", unidad: "% de la población de 15 años y más", subeEsBueno: true },
+  til1:         { nombre: "Tasa de informalidad laboral", corto: "Informalidad",  unidad: "% de la población ocupada",           subeEsBueno: false },
+  subocupacion: { nombre: "Tasa de subocupación",         corto: "Subocupación",  unidad: "% de la población ocupada",           subeEsBueno: false },
+};
+
+const etiqueta = (p) => { const [a, t] = p.split("_T"); return `${ORD[t]} Trim ${a}`; };
+const anioAnterior = (p) => { const [a, t] = p.split("_T"); return `${+a - 1}_T${t}`; };
+const cierreDic = (p) => { const a = +p.split("_T")[0]; return `${a - 1}_T4`; };
+const trimPrevio = (p) => { const [a, t] = p.split("_T").map(Number); return t === 1 ? `${a - 1}_T4` : `${a}_T${t - 1}`; };
+const pct = (v, d = 2) => `${v.toFixed(d)}%`;
+const signo = (v, d = 2) => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
+const signoN = (v) => (v > 0 ? "+" : v < 0 ? "−" : "±") + nf0.format(Math.abs(v));
+const compacto = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(2)} M` : n >= 1e3 ? `${nf0.format(Math.round(n / 1e3))} mil` : nf0.format(n);
+const fechaCDMX = (iso) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d)) return null;
+  return d.toLocaleString("es-MX", { timeZone: "America/Mexico_City", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+};
+function el(tag, attrs = {}, ...hijos) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const h of hijos) if (h != null) e.append(h);
+  return e;
+}
+function segmentado(contenedor, opciones, valor, alCambiar) {
+  contenedor.replaceChildren();
+  for (const o of opciones) {
+    const b = el("button", { type: "button", "aria-pressed": String(o.valor === valor), disabled: o.deshabilitado || false, title: o.titulo || false, text: o.texto });
+    b.addEventListener("click", () => {
+      contenedor.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      alCambiar(o.valor);
+    });
+    contenedor.append(b);
+  }
+}
+function clase(delta, subeEsBueno) {
+  if (Math.abs(delta) < 1e-9) return "neutro";
+  return (delta > 0) === subeEsBueno ? "bien" : "mal";
+}
+
+// ─── Estado ────────────────────────────────────────────────────────────────
+let D = null;
+const S = { periodo: null, indicador: "td", rango: 10, comparacion: "anual", unidad: "personas", indEnt: "td", orden: null };
+const graficas = {};
+
+function grafica(id, config) {
+  graficas[id]?.destroy();
+  graficas[id] = new Chart(document.getElementById(id), config);
+}
+
+function baseChart() {
+  Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = css("--ink-2");
+  Chart.defaults.borderColor = css("--grid");
+  Chart.defaults.plugins.tooltip.backgroundColor = css("--ink");
+  Chart.defaults.plugins.tooltip.titleColor = css("--surface");
+  Chart.defaults.plugins.tooltip.bodyColor = css("--surface");
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius = 8;
+  Chart.defaults.plugins.tooltip.boxPadding = 4;
+  Chart.defaults.plugins.legend.display = false;
+  Chart.defaults.maintainAspectRatio = false;
+}
+
+// Etiqueta de valor al final de cada barra (horizontal)
+const etiquetasBarra = {
+  id: "etiquetasBarra",
+  afterDatasetsDraw(chart, _a, opts) {
+    if (!opts || !opts.formato) return;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = `600 11px ${Chart.defaults.font.family}`;
+    ctx.fillStyle = css("--ink-2");
+    ctx.textBaseline = "middle";
+    chart.data.datasets.forEach((ds, i) => {
+      chart.getDatasetMeta(i).data.forEach((bar, j) => {
+        const v = ds.data[j];
+        if (v == null) return;
+        const txt = opts.formato(v, j);
+        const neg = v < 0;
+        ctx.textAlign = neg ? "right" : "left";
+        ctx.fillText(txt, bar.x + (neg ? -6 : 6), bar.y);
+      });
+    });
+    ctx.restore();
+  },
+};
+// Línea vertical de referencia (promedio nacional)
+const lineaReferencia = {
+  id: "lineaReferencia",
+  afterDatasetsDraw(chart, _a, opts) {
+    if (!opts || opts.valor == null) return;
+    const { ctx, chartArea, scales } = chart;
+    const x = scales.x.getPixelForValue(opts.valor);
+    ctx.save();
+    ctx.strokeStyle = css("--ink-2"); ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
+    ctx.font = `600 11px ${Chart.defaults.font.family}`; ctx.fillStyle = css("--ink-2"); ctx.textAlign = "left";
+    ctx.fillText(opts.texto, x + 5, chartArea.top + 10);
+    ctx.restore();
+  },
+};
+
+// ─── Carga ─────────────────────────────────────────────────────────────────
+async function iniciar() {
+  try {
+    const r = await fetch(`data.json?v=${Date.now()}`, { cache: "no-store" });
+    D = await r.json();
+  } catch (e) {
+    $("#cargando").textContent = "No se pudieron cargar los datos. Recarga la página en unos minutos.";
+    return;
+  }
+  $("#cargando").remove();
+  baseChart();
+  Chart.register(etiquetasBarra, lineaReferencia);
+
+  // Solo trimestres con su comparativo anual (si no hay ninguno, todos)
+  const todos = Object.keys(D.periodos).sort().reverse();
+  const conAnual = todos.filter((p) => D.periodos[anioAnterior(p)]);
+  const disponibles = conAnual.length ? conAnual : todos;
+  const sel = $("#periodo");
+  for (const p of disponibles) sel.append(el("option", { value: p, text: etiqueta(p) }));
+  S.periodo = disponibles[0];
+  sel.addEventListener("change", () => { S.periodo = sel.value; render(); });
+
+  // Próxima publicación y última actualización
+  const ahora = new Date();
+  const prox = (D.calendario || []).find((c) => new Date(c.fecha) > ahora);
+  if (prox) {
+    const f = new Date(prox.fecha);
+    $("#proxima").textContent = `Próxima publicación de INEGI: ${etiqueta(prox.periodo)} — ${f.getDate()} ${MESES[f.getMonth()]} ${f.getFullYear()}, 06:00`;
+  }
+  const ultimaFicha = (D.fichas || []).map((f) => f.generada).filter(Boolean).sort().pop();
+  if (ultimaFicha) $("#actualizado").textContent = `Última ficha generada: ${fechaCDMX(ultimaFicha)} (hora CDMX)`;
+
+  // Pestañas
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => abrirPestana(b.dataset.tab)));
+  const inicial = location.hash.replace("#", "");
+  if (["resumen", "ocupacion", "entidades", "fichas"].includes(inicial)) abrirPestana(inicial);
+
+  render();
+  iniciarFichas();
+}
+
+function abrirPestana(id) {
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
+  document.querySelectorAll("section.panel").forEach((s) => s.classList.toggle("activo", s.id === id));
+  history.replaceState(null, "", `#${id}`);
+  Object.values(graficas).forEach((g) => g.resize());
+}
+
+function render() {
+  renderResumen();
+  renderOcupacion();
+  renderEntidades();
+}
+
+// ─── Resumen ───────────────────────────────────────────────────────────────
+function renderResumen() {
+  const p = S.periodo, act = D.periodos[p], antP = anioAnterior(p), ant = D.periodos[antP];
+  const J = act.jalisco.total, Ja = ant?.jalisco.total;
+  const ents = [...act.entidades].sort((a, b) => a.td - b.td);
+  const lugar = ents.findIndex((e) => e.nombre === "Jalisco") + 1;
+  const oc = act.ocupacion, oca = ant?.ocupacion;
+
+  const tarjetas = [
+    { lbl: IND.td.nombre, val: pct(J.td), d: Ja && J.td - Ja.td, unidad: " pp", bueno: false,
+      extra: `Nacional ${pct(act.nacional.td)} · Lugar ${lugar} de ${ents.length} (1 = menor desocupación)` },
+    { lbl: "Población ocupada", val: compacto(oc.total), d: oca && (oc.total / oca.total - 1) * 100, unidad: "%", bueno: true, dec: 1,
+      extra: `${nf0.format(oc.total)} personas` },
+    { lbl: IND.til1.nombre, val: pct(J.til1, 1), d: Ja && J.til1 - Ja.til1, unidad: " pp", bueno: false,
+      extra: `Nacional ${pct(act.nacional.til1, 1)}` },
+    { lbl: IND.tpea.nombre, val: pct(J.tpea, 1), d: Ja && J.tpea - Ja.tpea, unidad: " pp", bueno: true,
+      extra: `Nacional ${pct(act.nacional.tpea, 1)}` },
+  ];
+  const cont = $("#kpis");
+  cont.replaceChildren(...tarjetas.map((t) => el("div", { class: "card kpi" },
+    el("p", { class: "lbl", text: t.lbl }),
+    el("div", { class: "val", text: t.val }),
+    t.d == null ? el("div", { class: "delta neutro", text: "Sin dato del año anterior" })
+      : el("div", { class: `delta ${clase(t.d, t.bueno)}` }, `${t.d > 0 ? "▲" : t.d < 0 ? "▼" : "■"} ${signo(t.d, t.dec ?? 2)}${t.unidad} `, el("span", { text: `vs ${etiqueta(antP)}` })),
+    el("div", { class: "extra", text: t.extra }),
+  )));
+
+  // Serie
+  segmentado($("#seg-indicador"), Object.entries(IND).map(([k, v]) => ({ valor: k, texto: v.corto })), S.indicador, (v) => { S.indicador = v; renderSerie(); });
+  renderSerie();
+
+  // Por sexo
+  const H = act.jalisco.hombres, M = act.jalisco.mujeres;
+  $("#sub-sexo").textContent = `Jalisco, ${etiqueta(p)} · tasas en %`;
+  const claves = Object.keys(IND);
+  grafica("graf-sexo", {
+    type: "bar",
+    data: {
+      labels: claves.map((k) => IND[k].corto),
+      datasets: [
+        { label: "Hombres", data: claves.map((k) => H[k]), backgroundColor: css("--serie-1"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 22, categoryPercentage: .7, barPercentage: .9 },
+        { label: "Mujeres", data: claves.map((k) => M[k]), backgroundColor: css("--serie-2"), borderRadius: 4, borderSkipped: "start", maxBarThickness: 22, categoryPercentage: .7, barPercentage: .9 },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      layout: { padding: { right: 44 } },
+      scales: { x: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { callback: (v) => `${v}%` } }, y: { grid: { display: false } } },
+      plugins: {
+        tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.x.toFixed(2)}%` } },
+        etiquetasBarra: { formato: (v) => `${v.toFixed(1)}%` },
+      },
+    },
+  });
+  const ts = $("#tabla-sexo");
+  ts.replaceChildren(
+    el("thead", {}, el("tr", {}, ...["Indicador", "Total", "Hombres", "Mujeres", "Brecha M−H"].map((h) => el("th", { text: h })))),
+    el("tbody", {}, ...claves.map((k) => el("tr", {},
+      el("td", { text: IND[k].corto }), el("td", { text: J[k].toFixed(2) }), el("td", { text: H[k].toFixed(2) }),
+      el("td", { text: M[k].toFixed(2) }), el("td", { text: signo(M[k] - H[k]) }))))
+  );
+}
+
+function renderSerie() {
+  const k = S.indicador;
+  let serie = k === "td" ? D.serie_td : D.serie_indicadores.filter((r) => r[k] != null);
+  serie = serie.map((r) => ({ p: r.periodo, v: r[k] })).filter((r) => r.v != null);
+  const anios = [...new Set(serie.map((r) => +r.p.slice(0, 4)))];
+  const largo = anios.length > 6;
+  $("#seg-rango").hidden = !largo;
+  if (largo) {
+    segmentado($("#seg-rango"), [{ valor: 5, texto: "5 años" }, { valor: 10, texto: "10 años" }, { valor: 0, texto: "Todo" }], S.rango, (v) => { S.rango = v; renderSerie(); });
+    if (S.rango) { const desde = anios[anios.length - 1] - S.rango + 1; serie = serie.filter((r) => +r.p.slice(0, 4) >= desde); }
+  }
+  $("#titulo-serie").textContent = `${IND[k].nombre} — Jalisco`;
+  $("#sub-serie").textContent = `${IND[k].unidad} · ${etiqueta(serie[0].p)} a ${etiqueta(serie[serie.length - 1].p)}`;
+  const color = css("--serie-1");
+  const ultimo = serie.length - 1;
+  const seleccionado = serie.findIndex((r) => r.p === S.periodo);
+  grafica("graf-serie", {
+    type: "line",
+    data: {
+      labels: serie.map((r) => r.p),
+      datasets: [{
+        data: serie.map((r) => r.v), borderColor: color, borderWidth: 2, cubicInterpolationMode: "monotone", fill: true,
+        backgroundColor: color + "1a",
+        pointRadius: serie.map((_, i) => (i === ultimo || i === seleccionado ? 5 : serie.length > 30 ? 0 : 3)),
+        pointBackgroundColor: color, pointBorderColor: css("--surface"), pointBorderWidth: 2, pointHoverRadius: 6,
+      }],
+    },
+    options: {
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10, callback(v) { const p = this.getLabelForValue(v); return p.endsWith("_T1") || serie.length < 16 ? (serie.length < 16 ? etiqueta(p).replace(" Trim ", "T ") : p.slice(0, 4)) : ""; } } },
+        y: { grid: { color: css("--grid") }, ticks: { callback: (v) => `${v}%` } },
+      },
+      plugins: { tooltip: { callbacks: { title: (c) => etiqueta(c[0].label), label: (c) => ` ${c.parsed.y.toFixed(2)}%` } } },
+    },
+  });
+}
+
+// ─── Población ocupada ─────────────────────────────────────────────────────
+function baseComparacion() {
+  const p = S.periodo;
+  const ops = [
+    { valor: "anual", periodo: anioAnterior(p), texto: `vs año anterior (${etiqueta(anioAnterior(p))})` },
+    { valor: "dic", periodo: cierreDic(p), texto: `vs diciembre (${etiqueta(cierreDic(p))})` },
+    { valor: "previo", periodo: trimPrevio(p), texto: `vs trimestre anterior (${etiqueta(trimPrevio(p))})` },
+  ];
+  if (p.endsWith("_T1")) ops.splice(2, 1);          // en T1, diciembre = trimestre anterior
+  return ops.map((o) => ({ ...o, deshabilitado: !D.periodos[o.periodo]?.ocupacion }));
+}
+
+function renderOcupacion() {
+  const p = S.periodo, act = D.periodos[p].ocupacion;
+  const ops = baseComparacion();
+  if (!ops.find((o) => o.valor === S.comparacion && !o.deshabilitado)) S.comparacion = (ops.find((o) => !o.deshabilitado) || ops[0]).valor;
+  segmentado($("#seg-comparacion"), ops, S.comparacion, (v) => { S.comparacion = v; renderOcupacion(); });
+  segmentado($("#seg-unidad"), [{ valor: "personas", texto: "Personas" }, { valor: "pct", texto: "%" }], S.unidad, (v) => { S.unidad = v; renderOcupacion(); });
+
+  const op = ops.find((o) => o.valor === S.comparacion);
+  const base = op.deshabilitado ? null : D.periodos[op.periodo].ocupacion;
+  const cambio = (a, b) => (b == null ? null : { n: a - b, p: b ? (a / b - 1) * 100 : null });
+
+  // Tarjetas
+  const tarjetas = [["Total", "total"], ["Formal", "formal"], ["Informal", "informal"], ["Hombres", "hombres"], ["Mujeres", "mujeres"]];
+  $("#kpis-ocupacion").replaceChildren(...tarjetas.map(([lbl, k]) => {
+    const c = base && cambio(act[k], base[k]);
+    return el("div", { class: "card kpi chica" },
+      el("p", { class: "lbl", text: lbl === "Total" ? "Población ocupada" : lbl }),
+      el("div", { class: "val", text: compacto(act[k]) }),
+      c ? el("div", { class: `delta ${k === "informal" ? "neutro" : clase(c.n, true)}` },
+        S.unidad === "pct" ? `${signo(c.p, 1)}%` : signoN(c.n), " ", el("span", { text: S.unidad === "pct" ? `(${signoN(c.n)})` : `(${signo(c.p, 1)}%)` }))
+        : el("div", { class: "delta neutro", text: "Sin dato para comparar" }),
+      k !== "total" ? el("div", { class: "extra", text: `${(act[k] / act.total * 100).toFixed(1)}% del total` }) : el("div", { class: "extra", text: `${nf0.format(act.total)} personas` }),
+    );
+  }));
+
+  // Sectores
+  const sectores = Object.entries(D.sectores).map(([k, nombre]) => {
+    const a = act.sectores[k], b = base?.sectores[k];
+    return { nombre, a, c: cambio(a, b), poco: a / act.total < 0.01 };
+  });
+  const noEsp = { nombre: "No especificado", a: act.sector_no_especificado, c: cambio(act.sector_no_especificado, base?.sector_no_especificado), poco: true };
+  const pocos = sectores.filter((s) => s.poco).map((s) => s.nombre);
+  $("#sub-sectores").textContent = base ? `${etiqueta(p)} ${op.texto.replace("vs", "vs")} · ${S.unidad === "pct" ? "cambio %" : "cambio en personas"}` : "Sin dato para comparar";
+
+  const graf = sectores.filter((s) => s.c && !s.poco).sort((x, y) => (S.unidad === "pct" ? y.c.p - x.c.p : y.c.n - x.c.n));
+  const valor = (s) => (S.unidad === "pct" ? s.c.p : s.c.n);
+  grafica("graf-sectores", {
+    type: "bar",
+    data: {
+      labels: graf.map((s) => s.nombre),
+      datasets: [{
+        data: graf.map(valor),
+        backgroundColor: graf.map((s) => (valor(s) >= 0 ? css("--sube") : css("--baja"))),
+        borderRadius: 4, borderSkipped: "start", maxBarThickness: 22,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      layout: { padding: { left: 0, right: 70 } },
+      scales: {
+        x: { grid: { color: css("--grid") }, ticks: { callback: (v) => (S.unidad === "pct" ? `${v}%` : compacto(Math.abs(v)).replace(/^/, v < 0 ? "−" : "")) } },
+        y: { grid: { display: false } },
+      },
+      plugins: {
+        tooltip: { callbacks: {
+          title: (c) => graf[c[0].dataIndex].nombre,
+          label: (c) => { const s = graf[c.dataIndex]; return [` ${signoN(s.c.n)} personas (${signo(s.c.p, 1)}%)`, ` ${etiqueta(p)}: ${nf0.format(s.a)} personas`]; },
+        } },
+        etiquetasBarra: { formato: (v) => (S.unidad === "pct" ? `${signo(v, 1)}%` : signoN(v)) },
+      },
+    },
+  });
+
+  // Tabla
+  const filas = [
+    { nombre: "Población ocupada total", a: act.total, c: cambio(act.total, base?.total), tipo: "grupo" },
+    { nombre: "Formalidad", tipo: "titulo" },
+    { nombre: "Formal", a: act.formal, c: cambio(act.formal, base?.formal), tipo: "sangria" },
+    { nombre: "Informal", a: act.informal, c: cambio(act.informal, base?.informal), tipo: "sangria" },
+    { nombre: "Sexo", tipo: "titulo" },
+    { nombre: "Hombres", a: act.hombres, c: cambio(act.hombres, base?.hombres), tipo: "sangria" },
+    { nombre: "Mujeres", a: act.mujeres, c: cambio(act.mujeres, base?.mujeres), tipo: "sangria" },
+    { nombre: "Actividad económica", tipo: "titulo" },
+  ];
+  let ordenados = [...sectores];
+  if (S.orden) {
+    const { col, dir } = S.orden;
+    const v = (s) => (col === 1 ? s.a : col === 2 ? s.c?.n ?? -Infinity : col === 3 ? s.c?.p ?? -Infinity : s.nombre);
+    ordenados.sort((x, y) => (col === 0 ? v(x).localeCompare(v(y), "es") : v(x) - v(y)) * dir);
+  }
+  for (const s of [...ordenados, noEsp]) filas.push({ ...s, tipo: "sangria" });
+
+  const encabezados = ["Concepto", etiqueta(p), "Cambio (personas)", "Cambio (%)"];
+  const tabla = $("#tabla-ocupacion");
+  const thead = el("thead", {}, el("tr", {}, ...encabezados.map((h, i) => {
+    const flecha = S.orden?.col === i ? (S.orden.dir > 0 ? " ▲" : " ▼") : "";
+    const th = el("th", { class: "ordenable", scope: "col", tabindex: "0", text: h + flecha });
+    const ordenar = () => { S.orden = S.orden?.col === i ? { col: i, dir: -S.orden.dir } : { col: i, dir: i === 0 ? 1 : -1 }; renderOcupacion(); };
+    th.addEventListener("click", ordenar);
+    th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ordenar(); } });
+    return th;
+  })));
+  const tbody = el("tbody", {}, ...filas.map((f) => {
+    if (f.tipo === "titulo") return el("tr", { class: "grupo" }, el("td", { text: f.nombre, colspan: "4" }));
+    const tr = el("tr", { class: `${f.tipo === "grupo" ? "grupo" : "sangria"}${f.poco ? " poco" : ""}` },
+      el("td", { text: f.nombre + (f.poco ? " *" : "") }),
+      el("td", { text: nf0.format(f.a) }),
+      el("td", { text: f.c ? signoN(f.c.n) : "—" }),
+      el("td", { text: f.c && f.c.p != null ? `${signo(f.c.p, 1)}%` : "—" }));
+    return tr;
+  }));
+  tabla.replaceChildren(thead, tbody);
+  $("#nota-grafica").textContent = pocos.length ? `No se grafican por tener pocos casos en la muestra: ${pocos.join(", ")} (ver tabla).` : "";
+  $("#nota-ocupacion").textContent = `* Pocos casos en la muestra (${[...pocos, "No especificado"].join(", ")}): variaciones poco confiables.`;
+}
+
+// ─── Comparativo estatal ───────────────────────────────────────────────────
+function renderEntidades() {
+  segmentado($("#seg-ent"), Object.entries(IND).map(([k, v]) => ({ valor: k, texto: v.corto })), S.indEnt, (v) => { S.indEnt = v; renderEntidades(); });
+  const k = S.indEnt, act = D.periodos[S.periodo];
+  const ents = [...act.entidades].sort((a, b) => a[k] - b[k]);
+  const lugar = ents.findIndex((e) => e.nombre === "Jalisco") + 1;
+  $("#titulo-entidades").textContent = `${IND[k].nombre} por entidad`;
+  $("#sub-entidades").textContent = `${etiqueta(S.periodo)} · ${IND[k].unidad} · Jalisco: lugar ${lugar} de ${ents.length} (de menor a mayor)`;
+  grafica("graf-entidades", {
+    type: "bar",
+    data: {
+      labels: ents.map((e) => e.nombre),
+      datasets: [{
+        data: ents.map((e) => e[k]),
+        backgroundColor: ents.map((e) => (e.nombre === "Jalisco" ? css("--serie-1") : css("--resto"))),
+        borderRadius: 4, borderSkipped: "start", maxBarThickness: 16, categoryPercentage: .85,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      layout: { padding: { right: 44 } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: css("--grid") }, ticks: { callback: (v) => `${v}%` } },
+        y: { grid: { display: false }, ticks: { autoSkip: false, font: (c) => ({ weight: ents[c.index]?.nombre === "Jalisco" ? "700" : "400" }), color: (c) => (ents[c.index]?.nombre === "Jalisco" ? css("--ink") : css("--ink-2")) } },
+      },
+      plugins: {
+        tooltip: { callbacks: { label: (c) => ` ${c.parsed.x.toFixed(2)}% · lugar ${c.dataIndex + 1}` } },
+        etiquetasBarra: { formato: (v, j) => (ents[j].nombre === "Jalisco" ? `${v.toFixed(1)}%` : "") },
+        lineaReferencia: { valor: act.nacional[k], texto: `Nacional ${act.nacional[k].toFixed(1)}%` },
+      },
+    },
+  });
+}
+
+// ─── Fichas y generación ───────────────────────────────────────────────────
+function iniciarFichas() {
+  const lista = $("#lista-fichas");
+  if (!D.fichas?.length) lista.append(el("p", { class: "sub", text: "Todavía no hay fichas generadas." }));
+  for (const f of D.fichas || []) {
+    const fecha = fechaCDMX(f.generada);
+    const mas = el("details", { class: "mas" }, el("summary", { text: "Borrar", title: "Borrar esta ficha" }));
+    if (WORKER_URL) {
+      const clave = el("input", { type: "password", placeholder: "Clave", "aria-label": "Clave para borrar" });
+      const btn = el("button", { type: "button", class: "btn peligro", text: "Confirmar borrado" });
+      const msg = el("div", { class: "estado", role: "status" });
+      btn.addEventListener("click", () => enviarAlRobot("borrar", { periodo: f.periodo, clave: clave.value }, btn, msg,
+        `Ficha de ${etiqueta(f.periodo)} borrada. La página se actualiza en 1–2 minutos.`));
+      mas.append(el("div", { class: "borrar-form" }, clave, btn), msg);
+    } else {
+      mas.append(el("p", { class: "nota", text: "El borrado desde la página no está configurado." }));
+    }
+    lista.append(el("div", { class: "ficha" },
+      el("div", {}, el("h3", { text: `${etiqueta(f.periodo).replace("Trim", "Trimestre")}` }), el("p", { text: fecha ? `Generada el ${fecha} (hora CDMX)` : "Fecha de generación no registrada" })),
+      el("div", { class: "acciones" },
+        f.docx ? el("a", { class: "btn primario", href: f.docx, download: "", text: "Descargar Word" }) : null,
+        el("a", { class: "btn", href: f.txt, target: "_blank", rel: "noopener", text: "Ver texto" }),
+        mas)));
+  }
+
+  // Trimestres que se pueden pedir: los ya publicados según el calendario de INEGI
+  const ahora = new Date();
+  const publicados = (D.calendario || []).filter((c) => new Date(c.fecha) <= ahora).map((c) => c.periodo).reverse().slice(0, 8);
+  const sel = $("#g-periodo");
+  sel.append(el("option", { value: "", text: "El más reciente publicado" }));
+  for (const per of publicados) sel.append(el("option", { value: per, text: etiqueta(per) + (D.fichas?.some((f) => f.periodo === per) ? " (ya generada)" : "") }));
+
+  if (!WORKER_URL) {
+    $("#generar-desactivado").hidden = false;
+    $("#form-generar").querySelectorAll("input, select, button").forEach((x) => (x.disabled = true));
+    return;
+  }
+  $("#form-generar").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const correo = $("#g-correo").value.trim();
+    const msg = $("#g-estado");
+    if (correo && !correo.split(",").every((c) => /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(c.trim()))) return mostrar(msg, "error", "Revisa el correo: parece tener un error.");
+    if (!$("#g-clave").value) return mostrar(msg, "error", "Escribe la clave.");
+    const periodo = sel.value;
+    if (periodo && D.fichas?.some((f) => f.periodo === periodo) && !$("#g-forzar").checked)
+      return mostrar(msg, "error", `La ficha de ${etiqueta(periodo)} ya existe. Marca “Volver a generarla si ya existe” para rehacerla.`);
+    const destino = correo ? `a ${correo} y a la lista del proyecto` : "a la lista del proyecto";
+    enviarAlRobot("generar", { periodo, correo, forzar: $("#g-forzar").checked, clave: $("#g-clave").value }, $("#g-boton"), msg,
+      `Listo: la ficha se generó y se envió ${destino}. Aparece en esta página en 1–2 minutos (recarga).`);
+  });
+  $("#card-ejecuciones").hidden = false;
+  cargarEjecuciones();
+}
+
+function mostrar(caja, tipo, texto, enlace) {
+  caja.className = `estado visible ${tipo}`;
+  caja.replaceChildren(texto);
+  if (enlace) caja.append(" ", el("a", { href: enlace, target: "_blank", rel: "noopener", text: "Ver detalle" }));
+}
+
+async function enviarAlRobot(accion, cuerpo, boton, caja, mensajeOk) {
+  boton.disabled = true;
+  mostrar(caja, "info", "Enviando la solicitud al robot…");
+  try {
+    const r = await fetch(`${WORKER_URL}/${accion}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `Error ${r.status}`);
+    await seguirEjecucion(j.desde, caja, mensajeOk);
+  } catch (e) {
+    mostrar(caja, "error", e.message || "No se pudo contactar al robot.");
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+async function ejecuciones() {
+  const r = await fetch(`${WORKER_URL}/estado`, { cache: "no-store" });
+  if (!r.ok) throw new Error("No se pudo consultar el estado del robot.");
+  return (await r.json()).ejecuciones || [];
+}
+
+async function seguirEjecucion(desde, caja, mensajeOk) {
+  const inicio = new Date(desde || Date.now()).getTime() - 15000;
+  for (let i = 0; i < 80; i++) {                       // hasta ~8 minutos
+    await new Promise((res) => setTimeout(res, 6000));
+    const run = (await ejecuciones()).find((x) => x.evento === "workflow_dispatch" && new Date(x.creada).getTime() >= inicio);
+    if (!run) { mostrar(caja, "info", "Esperando a que el robot arranque…"); continue; }
+    if (run.estado !== "completed") { mostrar(caja, "info", `El robot está trabajando (${i * 6 + 6} s)…`, run.url); continue; }
+    cargarEjecuciones();
+    if (run.resultado === "success") return mostrar(caja, "ok", mensajeOk, run.url);
+    return mostrar(caja, "error", "El robot terminó con error.", run.url);
+  }
+  mostrar(caja, "info", "El robot sigue trabajando. Revisa el avance más tarde en “Actividad del robot”.");
+}
+
+async function cargarEjecuciones() {
+  const ul = $("#ejecuciones");
+  try {
+    const runs = await ejecuciones();
+    const nombre = { schedule: "Revisión diaria", workflow_dispatch: "Solicitud manual" };
+    const resultado = (r) => r.estado !== "completed" ? "⏳ En proceso" : r.resultado === "success" ? "✓ Correcto" : "✕ Error";
+    ul.replaceChildren(...runs.slice(0, 6).map((r) => el("li", {},
+      el("span", {}, el("a", { href: r.url, target: "_blank", rel: "noopener", text: nombre[r.evento] || r.evento }), " · ", fechaCDMX(r.creada)),
+      el("span", { class: r.estado !== "completed" ? "neutro" : r.resultado === "success" ? "bien" : "mal", text: resultado(r) }))));
+  } catch {
+    ul.replaceChildren(el("li", { text: "No se pudo consultar la actividad del robot." }));
+  }
+}
+
+iniciar();
+</script>
+</body>
+</html>

@@ -25,6 +25,10 @@ on:
         description: "Borrar la ficha de este trimestre (AAAA_T#) en lugar de generar"
         required: false
         default: ""
+      destinatario:
+        description: "Correo(s) adicional(es) para esta ficha, separados por coma"
+        required: false
+        default: ""
 
 permissions:
   contents: write             # para guardar las fichas en el repositorio
@@ -57,20 +61,26 @@ jobs:
           FORZAR:         ${{ inputs.forzar }}
           SIN_EMAIL:      ${{ inputs.sin_email }}
           BORRAR:         ${{ inputs.borrar }}
+          DESTINATARIO:   ${{ inputs.destinatario }}
         run: |
           args=()
           [ -n "$BORRAR" ] && args+=(--borrar "$BORRAR")
           [ -n "$PERIODO" ] && args+=(--periodo "$PERIODO")
           [ "$FORZAR" = "true" ] && args+=(--forzar)
           [ "$SIN_EMAIL" = "true" ] && args+=(--sin-email)
+          [ -n "$DESTINATARIO" ] && args+=(--correo "$DESTINATARIO")
           python robot.py "${args[@]}"
+
+      - name: Actualizar el dashboard web (docs/)
+        if: always()
+        run: python construir_sitio.py
 
       - name: Guardar fichas y datos en el repositorio
         if: always()
         run: |
           git config user.name  "robot-enoe"
           git config user.email "robot-enoe@users.noreply.github.com"
-          git add -A fichas datos/*.json serie_*.csv procesados.json calendario_enoe.json
+          git add -A fichas docs datos/*.json serie_*.csv procesados.json calendario_enoe.json
           if ! git diff --cached --quiet; then
             git commit -m "Robot: actualización $(TZ=America/Mexico_City date +%Y-%m-%d)"
             git push

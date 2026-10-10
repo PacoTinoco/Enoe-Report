@@ -164,9 +164,10 @@ def _valor(config, clave, env):
     return os.environ.get(env) or config.get("email", clave, fallback="")
 
 
-def enviar_correo(config, contexto, adjuntos: list[Path]):
+def enviar_correo(config, contexto, adjuntos: list[Path], extra=()):
     usuario = _valor(config, "usuario", "SMTP_USUARIO")
     destinatarios = [d.strip() for d in _valor(config, "destinatarios", "DESTINATARIOS").split(",") if d.strip()]
+    destinatarios += [d for d in extra if d.lower() not in {x.lower() for x in destinatarios}]
     if not usuario or not destinatarios:
         log.info("  Correo no configurado: se omite el envío.")
         return
@@ -203,7 +204,7 @@ def enviar_correo(config, contexto, adjuntos: list[Path]):
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
-def ejecutar(periodo: str, config, sin_email=False) -> tuple[Path, Path]:
+def ejecutar(periodo: str, config, sin_email=False, correos_extra=()) -> tuple[Path, Path]:
     log.info(f"━━ Pipeline ENOE Jalisco — {periodo} ━━")
 
     log.info("→ 1/5 Calculando indicadores desde los microdatos...")
@@ -231,7 +232,7 @@ def ejecutar(periodo: str, config, sin_email=False) -> tuple[Path, Path]:
         log.info("→ 4/5 Correo omitido (--sin-email).")
     else:
         log.info("→ 4/5 Enviando correo...")
-        enviar_correo(config, contexto, [txt, docx])
+        enviar_correo(config, contexto, [txt, docx], extra=correos_extra)
 
     log.info("→ 5/5 Registrando período como procesado.")
     marcar_procesado(periodo)
