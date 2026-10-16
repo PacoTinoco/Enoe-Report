@@ -855,8 +855,8 @@ function iniciarFichas() {
   // Trimestres que se pueden pedir: los ya publicados según el calendario de INEGI
   const publicados = (D.calendario || []).filter((c) => new Date(c.fecha).getTime() <= Date.now()).map((c) => c.periodo).reverse().slice(0, 8);
   const sel = $("#g-periodo");
-  sel.append(el("option", { value: "", text: "El más reciente publicado" }));
   for (const per of publicados) sel.append(el("option", { value: per, text: etiqueta(per) + (D.fichas?.some((f) => f.periodo === per) ? " (ya generada)" : "") }));
+  if (publicados.length) sel.value = publicados[0];            // por defecto, el último trimestre ya publicado
 
   $("#g-sinmail").addEventListener("change", (e) => { $("#g-correo").disabled = e.target.checked; });
   $("#form-generar").addEventListener("submit", (e) => {
@@ -902,10 +902,23 @@ async function seguirEjecucion(desde, caja, mensajeOk) {
     if (!run) { mostrar(caja, "info", "Esperando a que el robot arranque…"); continue; }
     if (run.estado !== "completed") { mostrar(caja, "info", `El robot está trabajando (${i * 6 + 6} s)…`, run.url); continue; }
     renderRobot();
-    if (run.resultado === "success") return mostrar(caja, "ok", mensajeOk, run.url);
-    return mostrar(caja, "error", "El robot terminó con error.", run.url);
+    if (run.resultado !== "success") return mostrar(caja, "error", "El robot terminó con error.", run.url);
+    const r = await resultadoDelRobot(run.url);          // el robot puede terminar bien sin haber generado nada
+    if (r && r.tipo !== "generada" && r.tipo !== "borrada")
+      return mostrar(caja, "aviso", `El robot terminó, pero no generó la ficha: ${r.detalle}`, run.url);
+    return mostrar(caja, "ok", mensajeOk, run.url);
   }
   mostrar(caja, "info", "El robot sigue trabajando. Revisa el avance más tarde en “Seguimiento del robot”.");
+}
+
+async function resultadoDelRobot(urlRun) {
+  const id = Number((urlRun.match(/runs\/(\d+)/) || [])[1]);
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/historial_robot.json?ref=main`, { cache: "no-store" });
+    const bin = atob((await r.json()).content.replace(/\s/g, ""));
+    const lista = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+    return lista.find((x) => x.id === id) || null;
+  } catch { return null; }
 }
 
 // ─── Seguimiento del robot ─────────────────────────────────────────────────
