@@ -1,1 +1,10 @@
-[]
+[
+ {
+  "id": 38849195003,
+  "fecha": "2026-10-15T22:10:35-06:00",
+  "evento": "workflow_dispatch",
+  "tipo": "sin_publicacion",
+  "detalle": "Sin publicación hoy (2026-10-15). Pendiente: 2026_T3. Próxima publicación: 2026_T3 el 2026-11-25 06:00",
+  "url": "https://github.com/PacoTinoco/Enoe-Report/actions/runs/38849195003"
+ }
+]
