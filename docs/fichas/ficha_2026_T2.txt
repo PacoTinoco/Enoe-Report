@@ -7,6 +7,10 @@ _*Series originales (sin ajuste estacional), periodicidad trimestral._
 Último trimestre disponible vs mismo trimestre del año anterior.
 ────────────────────────────────────────────────────────────
 
+La TD es el porcentaje de la población económicamente activa que no tiene trabajo y lo busca;
+una variación negativa es favorable. En el T2 2026 Jalisco registró *2.43%* (*−0.28 pp* frente
+al T2 2025) y se ubicó *0.22 pp por debajo* del promedio nacional (2.65%).
+
 *Comparativo Jalisco vs Nacional — T2 2026:*
 Período  Jalisco  Nacional  Diferencia (pp)
 ───────  ───────  ────────  ───────────────
@@ -18,6 +22,11 @@ Var. pp  −0.28    −0.01     —
 *Posicionamiento Nacional*
 TD de Jalisco vs entidades federativas — T2 2026
 ────────────────────────────────────────────────────────────
+
+Las 32 entidades se ordenan de menor a mayor TD (lugar 1 = menor desocupación). Jalisco ocupa
+el *lugar 15 de 32*, en la parte media de la tabla. Una TD baja no siempre indica un mejor
+mercado laboral: las cinco entidades con menor TD tienen una informalidad promedio de 66.0%
+(nacional: 55.1%).
 
 *Top 5 entidades con menor TD (T2 2026):*
 Lugar  Estado     TD (%)
@@ -43,6 +52,10 @@ Lugar  Estado            TD (%)
 *Comparativo Regional — Occidente / Centro-Bajío (T2 2026)*
 ────────────────────────────────────────────────────────────
 
+Compara a Jalisco con las 8 entidades de la región; la última columna es la distancia a la
+media regional (negativo = menor desocupación que la media). Jalisco ocupa el *4° lugar* con
+menor TD y está *prácticamente en la media* (2.45%).
+
 Lugar  Estado           TD (%)  vs Media regional (pp)
 ─────  ───────────────  ──────  ──────────────────────
 1      Colima           1.58%   −0.87
@@ -60,6 +73,14 @@ Lugar  Estado           TD (%)  vs Media regional (pp)
 Comparativo anual: T2 2026 vs T2 2025 — Jalisco
 ────────────────────────────────────────────────────────────
 
+Complementan la lectura de la TD: la TPEA indica qué parte de la población de 15 años y más
+trabaja o busca trabajo; la TIL1, qué parte de los ocupados es informal, y la subocupación, qué
+parte de los ocupados necesita trabajar más horas. Frente al T2 2025:
+*TD −0.28 pp, TPEA −1.5 pp, TIL1 +1.2 pp, Subocupación +0.7 pp*. La baja de la TD coincide con
+una menor participación: parte de la mejora puede deberse a que menos personas buscan empleo,
+no solo a más contratación. La informalidad se mantiene 8.6 pp por debajo del promedio
+nacional.
+
 Indicador                               T2 2025  T2 2026  Var. (pp)  Nacional T2 2026
 ──────────────────────────────────────  ───────  ───────  ─────────  ────────────────
 Tasa de Desocupación (TD)               2.71%    2.43%    −0.28      2.65%
@@ -71,6 +92,11 @@ Tasa de Subocupación                    1.1%     1.8%     +0.7       6.9%
 *Indicadores por Sexo — Jalisco T2 2026*
 ────────────────────────────────────────────────────────────
 
+La brecha M−H es la tasa de las mujeres menos la de los hombres (negativo = menor en mujeres).
+La TD de las mujeres (*1.65%*) es menor que la de los hombres (*2.93%*), pero su participación
+es *29.8 pp menor* (42.3% vs 72.1%): la TD de cada grupo debe leerse junto con su
+participación.
+
 Indicador     Total  Hombres  Mujeres  Brecha M−H
 ────────────  ─────  ───────  ───────  ──────────
 TD            2.43%  2.93%    1.65%    −1.28 pp
@@ -79,6 +105,9 @@ TIL1          46.5%  45.4%    48.3%    +2.9 pp
 Subocupación  1.8%   1.9%     1.5%     −0.4 pp
 
 *Variación anual por sexo (T2 2025 → T2 2026, pp):*
+Cambio en puntos porcentuales frente al T2 2025 (positivo = aumento). La TD de las mujeres
+*bajó 0.79 pp* y la de los hombres *subió 0.05 pp*.
+
 Indicador     Hombres  Mujeres
 ────────────  ───────  ───────
 TD            +0.05    −0.79
@@ -92,6 +121,13 @@ _Las estimaciones por sexo tienen mayor error de muestreo; cautela con variacion
 *Población Ocupada — Jalisco T2 2026*
 Personas y variación (absoluta y %)
 ────────────────────────────────────────────────────────────
+
+Personas ocupadas y su cambio respecto al cierre del año anterior (T4 2025), al mismo trimestre
+del año anterior (T2 2025; la comparación más limpia porque elimina el efecto estacional) y al
+trimestre anterior (T1 2026). En el último año la población ocupada
+*disminuyó en 52,020 personas (−1.3%)*. Por actividad, los mayores aumentos anuales fueron en
+Construcción (+37,219) y Servicios diversos (+29,074); las mayores caídas, en Comercio
+(−44,717) y Servicios sociales (−27,327).
 
 Concepto                          T2 2026    vs T4 2025        vs T2 2025        vs T1 2026
 ────────────────────────────────  ─────────  ────────────────  ────────────────  ────────────────
