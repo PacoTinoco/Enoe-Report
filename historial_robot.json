@@ -1,5 +1,13 @@
 [
  {
+  "id": 39988905096,
+  "fecha": "2026-10-23T10:42:17-06:00",
+  "evento": "schedule",
+  "tipo": "sin_publicacion",
+  "detalle": "Sin publicación hoy (2026-10-23). Pendiente: 2026_T3. Próxima publicación: 2026_T3 el 2026-11-25 06:00",
+  "url": "https://github.com/PacoTinoco/Enoe-Report/actions/runs/39988905096"
+ },
+ {
   "id": 39817376857,
   "fecha": "2026-10-22T10:50:39-06:00",
   "evento": "schedule",
