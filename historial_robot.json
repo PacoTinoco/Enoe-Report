@@ -1,5 +1,13 @@
 [
  {
+  "id": 40589531623,
+  "fecha": "2026-10-27T15:46:51-06:00",
+  "evento": "workflow_dispatch",
+  "tipo": "error",
+  "detalle": "Los microdatos de 2026_T2 todavía no están publicados.",
+  "url": "https://github.com/PacoTinoco/Enoe-Report/actions/runs/40589531623"
+ },
+ {
   "id": 40552891549,
   "fecha": "2026-10-27T11:41:26-06:00",
   "evento": "schedule",
