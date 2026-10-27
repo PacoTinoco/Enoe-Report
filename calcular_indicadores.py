@@ -92,16 +92,18 @@ def url_microdatos(periodo: str) -> str:
 def publicado(periodo: str) -> bool:
     """
     True si INEGI ya publicó los microdatos del período.
-    Ojo: para archivos que no existen, INEGI responde 200 con una página HTML,
-    así que no basta con el código de respuesta; se revisa que sea un ZIP.
+    INEGI no responde bien a HEAD (devuelve 200 con una página HTML aunque el ZIP exista),
+    y para archivos inexistentes también responde 200 con HTML. Por eso se pide con GET
+    solo los primeros bytes (Range) y se revisa que empiecen con la firma de un ZIP ("PK").
     """
     try:
-        r = requests.head(url_microdatos(periodo), timeout=20, allow_redirects=True)
+        with requests.get(url_microdatos(periodo), headers={"Range": "bytes=0-3"},
+                          timeout=30, allow_redirects=True, stream=True) as r:
+            inicio = next(r.iter_content(chunk_size=4), b"")
+            tipo = r.headers.get("Content-Type", "").lower()
+            return r.status_code in (200, 206) and "html" not in tipo and inicio[:2] == b"PK"
     except requests.RequestException:
         return False
-    tipo = r.headers.get("Content-Type", "").lower()
-    tamano = int(r.headers.get("Content-Length", 0))
-    return r.status_code == 200 and "html" not in tipo and tamano > 1_000_000
 
 
 def descargar_microdatos(periodo: str, carpeta: Path) -> Path:
