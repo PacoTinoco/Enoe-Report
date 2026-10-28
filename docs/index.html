@@ -829,8 +829,9 @@ function mostrar(caja, tipo, texto, enlace, textoEnlace = "Ver detalle") {
   if (enlace) caja.append(" ", el("a", { href: enlace, target: "_blank", rel: "noopener", text: textoEnlace }));
 }
 
-function iniciarFichas() {
+function renderListaFichas() {
   const lista = $("#lista-fichas");
+  lista.replaceChildren();
   if (!D.fichas?.length) lista.append(el("p", { class: "sub", text: "Todavía no hay fichas generadas." }));
   for (const f of D.fichas || []) {
     const fecha = fechaCDMX(f.generada);
@@ -839,7 +840,7 @@ function iniciarFichas() {
       const clave = el("input", { type: "password", placeholder: "Clave", "aria-label": "Clave para borrar" });
       const btn = el("button", { type: "button", class: "btn peligro", text: "Confirmar borrado" });
       const msg = el("div", { class: "estado", role: "status" });
-      btn.addEventListener("click", () => enviarAlRobot("borrar", { periodo: f.periodo, clave: clave.value }, btn, msg, `Ficha de ${etiqueta(f.periodo)} borrada. La página se actualiza en 1–2 minutos.`));
+      btn.addEventListener("click", () => enviarAlRobot("borrar", { periodo: f.periodo, clave: clave.value }, btn, msg, `Ficha de ${etiqueta(f.periodo)} borrada. La lista se actualiza sola.`));
       mas.append(el("div", { class: "borrar-form" }, clave, btn), msg);
     } else {
       mas.append(el("p", { class: "nota", text: "El borrado desde la página se activa al conectar el servicio del robot (SITIO.md)." }));
@@ -851,12 +852,48 @@ function iniciarFichas() {
         el("a", { class: "btn", href: f.txt, target: "_blank", rel: "noopener", text: "Ver texto" }),
         mas)));
   }
+}
 
-  // Trimestres que se pueden pedir: los ya publicados según el calendario de INEGI
+// Trimestres que se pueden pedir: los ya publicados según el calendario de INEGI
+function llenarSelectorFichas() {
   const publicados = (D.calendario || []).filter((c) => new Date(c.fecha).getTime() <= Date.now()).map((c) => c.periodo).reverse().slice(0, 8);
-  const sel = $("#g-periodo");
+  const sel = $("#g-periodo"), previo = sel.value;
+  sel.replaceChildren();
   for (const per of publicados) sel.append(el("option", { value: per, text: etiqueta(per) + (D.fichas?.some((f) => f.periodo === per) ? " (ya generada)" : "") }));
-  if (publicados.length) sel.value = publicados[0];            // por defecto, el último trimestre ya publicado
+  if (previo && publicados.includes(previo)) sel.value = previo;   // conserva lo que el usuario eligió
+  else if (publicados.length) sel.value = publicados[0];            // por defecto, el último trimestre ya publicado
+}
+
+// Vuelve a pedir data.json y redibuja lo que cambia cuando el robot trabaja (fichas, historial, próxima publicación)
+let ultimaCarga = Date.now();
+async function recargarDatos() {
+  try {
+    const r = await fetch(`data.json?v=${Date.now()}`, { cache: "no-store" });
+    if (!r.ok) return false;
+    D = await r.json();
+    ultimaCarga = Date.now();
+    renderListaFichas(); llenarSelectorFichas(); renderProxima(); renderRobot();
+    return true;
+  } catch { return false; }
+}
+
+// GitHub Pages tarda ~1 min en publicar lo que el robot guardó: se espera a que data.json ya incluya la ejecución
+async function esperarPagina(idRun) {
+  for (let i = 0; i < 24; i++) {                         // hasta ~3 min
+    if (await recargarDatos() && (D.historial || []).some((h) => h.id === idRun)) return true;
+    await new Promise((res) => setTimeout(res, 8000));
+  }
+  return false;
+}
+
+document.addEventListener("visibilitychange", () => {      // al volver a la pestaña, si los datos tienen más de 1 min
+  if (!document.hidden && D && Date.now() - ultimaCarga > 60000) recargarDatos();
+});
+
+function iniciarFichas() {
+  renderListaFichas();
+  llenarSelectorFichas();
+  const sel = $("#g-periodo");
 
   $("#g-sinmail").addEventListener("change", (e) => { $("#g-correo").disabled = e.target.checked; });
   $("#form-generar").addEventListener("submit", (e) => {
@@ -869,7 +906,7 @@ function iniciarFichas() {
       return mostrar(msg, "error", `La ficha de ${etiqueta(periodo)} ya existe. Marca “Volver a generarla si ya existe” para rehacerla.`);
     const destino = sinMail ? "sin enviar correo" : correo ? `y se envió a ${correo} y a la lista del proyecto` : "y se envió a la lista del proyecto";
     enviarAlRobot("generar", { periodo, correo: sinMail ? "" : correo, sinMail, forzar: $("#g-forzar").checked, clave: $("#g-clave").value }, $("#g-boton"), msg,
-      `Listo: la ficha se generó ${destino}. Aparece en esta página en 1–2 minutos (recarga).`);
+      `Listo: la ficha se generó ${destino}. La lista de fichas se actualiza sola en esta página.`);
   });
 }
 
@@ -906,7 +943,9 @@ async function seguirEjecucion(desde, caja, mensajeOk) {
     const r = await resultadoDelRobot(run.url);          // el robot puede terminar bien sin haber generado nada
     if (r && r.tipo !== "generada" && r.tipo !== "borrada")
       return mostrar(caja, "aviso", `El robot terminó, pero no generó la ficha: ${r.detalle}`, run.url);
-    return mostrar(caja, "ok", mensajeOk, run.url);
+    mostrar(caja, "info", "Listo. Actualizando la lista de fichas…", run.url);
+    const visible = await esperarPagina(run.id);
+    return mostrar(caja, "ok", visible ? mensajeOk : mensajeOk + " Si aún no la ves, recarga la página en un minuto.", run.url);
   }
   mostrar(caja, "info", "El robot sigue trabajando. Revisa el avance más tarde en “Seguimiento del robot”.");
 }
