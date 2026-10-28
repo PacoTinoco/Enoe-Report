@@ -1,5 +1,13 @@
 [
  {
+  "id": 40714913541,
+  "fecha": "2026-10-28T09:20:52-06:00",
+  "evento": "workflow_dispatch",
+  "tipo": "generada",
+  "detalle": "Ficha 2026_T2 generada y enviada.",
+  "url": "https://github.com/PacoTinoco/Enoe-Report/actions/runs/40714913541"
+ },
+ {
   "id": 40590495462,
   "fecha": "2026-10-27T15:54:01-06:00",
   "evento": "workflow_dispatch",
