@@ -1,0 +1,155 @@
+*Tasa de Desocupación — Jalisco. 3° Trimestre 2026*
+
+_*Series originales (sin ajuste estacional), periodicidad trimestral._
+
+────────────────────────────────────────────────────────────
+*Análisis Anual*
+Último trimestre disponible vs mismo trimestre del año anterior.
+────────────────────────────────────────────────────────────
+
+La TD es el porcentaje de la población económicamente activa que no tiene trabajo y lo busca;
+una variación negativa es favorable. En el T3 2026 Jalisco registró *2.36%* (*−0.14 pp* frente
+al T3 2025) y se ubicó *0.55 pp por debajo* del promedio nacional (2.91%).
+
+*Comparativo Jalisco vs Nacional — T3 2026:*
+Período  Jalisco  Nacional  Diferencia (pp)
+───────  ───────  ────────  ───────────────
+T3 2025  2.50%    2.89%     −0.39
+T3 2026  2.36%    2.91%     −0.55
+Var. pp  −0.14    +0.02     —
+
+────────────────────────────────────────────────────────────
+*Posicionamiento Nacional*
+TD de Jalisco vs entidades federativas — T3 2026
+────────────────────────────────────────────────────────────
+
+Las 32 entidades se ordenan de menor a mayor TD (lugar 1 = menor desocupación). Jalisco ocupa
+el *lugar 11 de 32*, en la parte media de la tabla. Una TD baja no siempre indica un mejor
+mercado laboral: las cinco entidades con menor TD tienen una informalidad promedio de 68.8%
+(nacional: 55.0%).
+
+*Top 5 entidades con menor TD (T3 2026):*
+Lugar  Estado     TD (%)
+─────  ─────────  ──────
+1      Guerrero   1.08%
+2      Oaxaca     1.37%
+3      Morelos    1.38%
+4      Colima     1.62%
+5      Michoacán  1.82%
+…      …          …
+11     Jalisco ←  2.36%
+
+*Top 5 entidades con mayor TD (T3 2026):*
+Lugar  Estado            TD (%)
+─────  ────────────────  ──────
+1      Ciudad de México  4.32%
+2      Sonora            4.30%
+3      Tabasco           4.21%
+4      Durango           3.80%
+5      Tlaxcala          3.65%
+
+────────────────────────────────────────────────────────────
+*Comparativo Regional — Occidente / Centro-Bajío (T3 2026)*
+────────────────────────────────────────────────────────────
+
+Compara a Jalisco con las 8 entidades de la región; la última columna es la distancia a la
+media regional (negativo = menor desocupación que la media). Jalisco ocupa el *3° lugar* con
+menor TD y está *0.25 pp por debajo de la media* (2.61%).
+
+Lugar  Estado           TD (%)  vs Media regional (pp)
+─────  ───────────────  ──────  ──────────────────────
+1      Colima           1.62%   −0.99
+2      Michoacán        1.82%   −0.79
+3      Jalisco ←        2.36%   −0.25
+4      Zacatecas        2.36%   −0.25
+5      Aguascalientes   2.83%   +0.22
+6      San Luis Potosí  3.16%   +0.55
+7      Nayarit          3.17%   +0.56
+8      Guanajuato       3.57%   +0.96
+       Media regional   2.61%   —
+
+────────────────────────────────────────────────────────────
+*Indicadores Complementarios del Mercado Laboral*
+Comparativo anual: T3 2026 vs T3 2025 — Jalisco
+────────────────────────────────────────────────────────────
+
+Complementan la lectura de la TD: la TPEA indica qué parte de la población de 15 años y más
+trabaja o busca trabajo; la TIL1, qué parte de los ocupados es informal, y la subocupación, qué
+parte de los ocupados necesita trabajar más horas. Frente al T3 2025:
+*TD −0.14 pp, TPEA −2.1 pp, TIL1 +1.5 pp, Subocupación −0.6 pp*. La baja de la TD coincide con
+una menor participación: parte de la mejora puede deberse a que menos personas buscan empleo,
+no solo a más contratación. La informalidad se mantiene 6.5 pp por debajo del promedio
+nacional.
+
+Indicador                               T3 2025  T3 2026  Var. (pp)  Nacional T3 2026
+──────────────────────────────────────  ───────  ───────  ─────────  ────────────────
+Tasa de Desocupación (TD)               2.50%    2.36%    −0.14      2.91%
+Tasa de Participación Económica (TPEA)  57.2%    55.1%    −2.1       59.0%
+Tasa de Informalidad Laboral (TIL1)     47.0%    48.5%    +1.5       55.0%
+Tasa de Subocupación                    1.8%     1.2%     −0.6       6.9%
+
+────────────────────────────────────────────────────────────
+*Indicadores por Sexo — Jalisco T3 2026*
+────────────────────────────────────────────────────────────
+
+La brecha M−H es la tasa de las mujeres menos la de los hombres (negativo = menor en mujeres).
+La TD de las mujeres (*1.55%*) es menor que la de los hombres (*2.90%*), pero su participación
+es *28.2 pp menor* (41.8% vs 70.0%): la TD de cada grupo debe leerse junto con su
+participación.
+
+Indicador     Total  Hombres  Mujeres  Brecha M−H
+────────────  ─────  ───────  ───────  ──────────
+TD            2.36%  2.90%    1.55%    −1.35 pp
+TPEA          55.1%  70.0%    41.8%    −28.2 pp
+TIL1          48.5%  47.5%    49.9%    +2.4 pp
+Subocupación  1.2%   1.5%     0.8%     −0.7 pp
+
+*Variación anual por sexo (T3 2025 → T3 2026, pp):*
+Cambio en puntos porcentuales frente al T3 2025 (positivo = aumento). La TD de las mujeres
+*bajó 0.99 pp* y la de los hombres *subió 0.43 pp*.
+
+Indicador     Hombres  Mujeres
+────────────  ───────  ───────
+TD            +0.43    −0.99
+TPEA          −3.1     −0.6
+TIL1          +1.1     +2.0
+Subocupación  −0.2     −1.3
+
+_Las estimaciones por sexo tienen mayor error de muestreo; cautela con variaciones pequeñas._
+
+────────────────────────────────────────────────────────────
+*Población Ocupada — Jalisco T3 2026*
+Personas y variación (absoluta y %)
+────────────────────────────────────────────────────────────
+
+Personas ocupadas y su cambio respecto al cierre del año anterior (T4 2025), al mismo trimestre
+del año anterior (T3 2025; la comparación más limpia porque elimina el efecto estacional) y al
+trimestre anterior (T2 2026). En el último año la población ocupada
+*disminuyó en 120,934 personas (−3.1%)*. Por actividad, los mayores aumentos anuales fueron en
+Servicios diversos (+43,428) y Serv. profesionales y financ. (+15,928); las mayores caídas, en
+Construcción (−62,560) y Manufactura (−44,585).
+
+Concepto                          T3 2026    vs T4 2025        vs T3 2025        vs T2 2026
+────────────────────────────────  ─────────  ────────────────  ────────────────  ────────────────
+Población ocupada total           3,743,373  −167,018 (−4.3%)  −120,934 (−3.1%)  −79,541 (−2.1%)
+Formalidad
+  Formal                          1,927,719  −68,229 (−3.4%)   −121,176 (−5.9%)  −116,059 (−5.7%)
+  Informal                        1,815,654  −98,789 (−5.2%)   +242 (+0.0%)      +36,518 (+2.1%)
+Sexo
+  Hombres                         2,223,843  −128,761 (−5.5%)  −159,596 (−6.7%)  −84,765 (−3.7%)
+  Mujeres                         1,519,530  −38,257 (−2.5%)   +38,662 (+2.6%)   +5,224 (+0.3%)
+Actividad económica
+  Agropecuario                    313,441    −46,492 (−12.9%)  −9,236 (−2.9%)    −25,254 (−7.5%)
+  Ind. extractiva y electricidad  9,939      +851 (+9.4%)      −2,075 (−17.3%)   −896 (−8.3%)
+  Manufactura                     664,052    −46,257 (−6.5%)   −44,585 (−6.3%)   −66,277 (−9.1%)
+  Construcción                    318,837    −27,179 (−7.9%)   −62,560 (−16.4%)  −44,183 (−12.2%)
+  Comercio                        795,327    −11,017 (−1.4%)   +816 (+0.1%)      +41,823 (+5.6%)
+  Restaurantes y alojamiento      319,848    −26,815 (−7.7%)   −30,176 (−8.6%)   +2,104 (+0.7%)
+  Transportes y comunicaciones    184,783    −8,682 (−4.5%)    −7,956 (−4.1%)    −1,486 (−0.8%)
+  Serv. profesionales y financ.   319,171    +11,044 (+3.6%)   +15,928 (+5.3%)   +14,054 (+4.6%)
+  Servicios sociales              277,457    −15,679 (−5.3%)   −17,241 (−5.9%)   −4,227 (−1.5%)
+  Servicios diversos              433,649    +33,210 (+8.3%)   +43,428 (+11.1%)  +3,540 (+0.8%)
+  Gobierno y org. internac.       98,083     −23,914 (−19.6%)  −3,431 (−3.4%)    +1,445 (+1.5%)
+  No especificado                 8,786      −6,088 (−40.9%)   −3,846 (−30.4%)   −184 (−2.1%)
+
+_Sectores con pocos casos (Ind. extractiva y electricidad, No especificado): variaciones poco confiables._

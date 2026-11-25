@@ -1,5 +1,13 @@
 [
  {
+  "id": 45703127857,
+  "fecha": "2026-11-25T15:21:10-06:00",
+  "evento": "schedule",
+  "tipo": "generada",
+  "detalle": "Ficha 2026_T3 generada y enviada.",
+  "url": "https://github.com/PacoTinoco/Enoe-Report/actions/runs/45703127857"
+ },
+ {
   "id": 45497211836,
   "fecha": "2026-11-24T16:03:59-06:00",
   "evento": "schedule",
